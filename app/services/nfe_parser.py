@@ -128,9 +128,11 @@ def parse_nfe_xml(xml_bytes: bytes) -> ParsedNFe:
         cfop = _text(prod, "nfe:CFOP") if prod is not None else None
         v_prod = _float(prod, "nfe:vProd") or 0.0 if prod is not None else 0.0
 
-        # ICMSUFDest é irmão do grupo específico do CST (ICMS00, ICMS10, ICMSSN102...),
-        # filho direto de <ICMS> — não fica aninhado dentro do grupo do CST.
-        icms_uf_dest = det.find("nfe:imposto/nfe:ICMS/nfe:ICMSUFDest", NS)
+        # ICMSUFDest é filho direto de <imposto>, irmão de <ICMS> (que por sua
+        # vez contém o grupo do CST: ICMS00, ICMS10, ICMSSN102...). Confirmado
+        # contra uma NF-e real autorizada pela SEFAZ (nao fica aninhado dentro
+        # de <ICMS> como uma fonte secundaria consultada anteriormente indicava).
+        icms_uf_dest = det.find("nfe:imposto/nfe:ICMSUFDest", NS)
 
         item = ItemICMSUFDest(
             numero_item=numero_item,

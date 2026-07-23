@@ -7,7 +7,7 @@
     "AL": {"aliquota_padrao": 19.0, "fcp_padrao": 2.0},
     "AP": {"aliquota_padrao": 18.0, "fcp_padrao": 0.0},
     "AM": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
-    "BA": {"aliquota_padrao": 19.5, "fcp_padrao": 2.0},
+    "BA": {"aliquota_padrao": 20.5, "fcp_padrao": 2.0},
     "CE": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
     "DF": {"aliquota_padrao": 20.0, "fcp_padrao": 0.0},
     "ES": {"aliquota_padrao": 17.0, "fcp_padrao": 2.0},

@@ -61,18 +61,18 @@
               <pICMS>12.00</pICMS>
               <vICMS>120.00</vICMS>
             </ICMS00>
-            <ICMSUFDest>
-              <vBCUFDest>1000.00</vBCUFDest>
-              <vBCFCPUFDest>1000.00</vBCFCPUFDest>
-              <pFCPUFDest>2.00</pFCPUFDest>
-              <pICMSUFDest>18.00</pICMSUFDest>
-              <pICMSInter>12.00</pICMSInter>
-              <pICMSInterPart>100.00</pICMSInterPart>
-              <vFCPUFDest>20.00</vFCPUFDest>
-              <vICMSUFDest>60.00</vICMSUFDest>
-              <vICMSUFRemet>0.00</vICMSUFRemet>
-            </ICMSUFDest>
           </ICMS>
+          <ICMSUFDest>
+            <vBCUFDest>1000.00</vBCUFDest>
+            <vBCFCPUFDest>1000.00</vBCFCPUFDest>
+            <pFCPUFDest>2.00</pFCPUFDest>
+            <pICMSUFDest>18.00</pICMSUFDest>
+            <pICMSInter>12.00</pICMSInter>
+            <pICMSInterPart>100.00</pICMSInterPart>
+            <vFCPUFDest>20.00</vFCPUFDest>
+            <vICMSUFDest>60.00</vICMSUFDest>
+            <vICMSUFRemet>0.00</vICMSUFRemet>
+          </ICMSUFDest>
         </imposto>
       </det>
       <total>
