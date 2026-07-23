@@ -91,7 +91,11 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
     guia = db.get(Guia, guia_id)
     if guia is None:
         raise HTTPException(404, "Guia nao encontrada.")
-    if guia.status not in ("aguardando_confirmacao", "erro"):
+    # "enviada" sem protocolo_lote e um estado travado: o envio anterior nao
+    # levantou excecao mas nao conseguimos extrair o numeroRecibo da resposta
+    # -- permite tentar de novo nesse caso especifico.
+    preso_sem_protocolo = guia.status == "enviada" and not guia.protocolo_lote
+    if guia.status not in ("aguardando_confirmacao", "erro") and not preso_sem_protocolo:
         raise HTTPException(400, f"Guia em status '{guia.status}' nao pode ser confirmada/reenviada.")
 
     empresa = get_or_create_empresa(db)
@@ -128,7 +132,14 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
 
         guia.status = "enviada"
         guia.protocolo_lote = resultado.protocolo
-        guia.mensagem_erro = None
+        if resultado.protocolo:
+            guia.mensagem_erro = None
+        else:
+            # O envio nao levantou excecao (o GNRE aceitou a chamada), mas nao
+            # conseguimos extrair o numeroRecibo da resposta -- guarda a
+            # resposta bruta em vez de descartar, senao fica impossivel
+            # diagnosticar o formato real sem acesso ao ambiente de producao.
+            guia.mensagem_erro = f"Enviado, mas sem numeroRecibo na resposta. Resposta bruta: {resultado.resposta_bruta[:1500]}"
     except Exception as exc:  # noqa: BLE001 -- superficie de erro fiscal, precisa chegar ate o usuario
         guia.status = "erro"
         guia.mensagem_erro = str(exc)

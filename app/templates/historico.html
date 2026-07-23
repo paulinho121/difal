@@ -118,6 +118,8 @@
             let acoes = '';
             if (g.status === 'aguardando_confirmacao') {
                 acoes = `<button onclick="confirmar(${g.id})" class="px-3 py-2 bg-primary text-on-primary rounded-lg font-label-md text-xs">Revisar e confirmar</button>`;
+            } else if (g.status === 'enviada' && !g.protocolo_lote) {
+                acoes = `<button onclick="confirmar(${g.id})" class="px-3 py-2 bg-primary text-on-primary rounded-lg font-label-md text-xs">Tentar novamente</button>`;
             } else if (g.status === 'enviada') {
                 acoes = `<button onclick="atualizarStatus(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Atualizar Status</button>`;
             } else if (g.status === 'erro') {
