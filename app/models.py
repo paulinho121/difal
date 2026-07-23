@@ -111,7 +111,7 @@ class Guia(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     nota_fiscal_id: Mapped[int] = mapped_column(ForeignKey("notas_fiscais.id"))
 
-    status: Mapped[str] = mapped_column(String(20), default="calculada")
+    status: Mapped[str] = mapped_column(String(30), default="calculada")
     # calculada -> aguardando_confirmacao -> enviada -> emitida | erro
 
     uf_favorecida: Mapped[str | None] = mapped_column(String(2), nullable=True)
