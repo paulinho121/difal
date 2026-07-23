@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 
 import requests
+from lxml import etree
 from zeep import Client
 from zeep.transports import Transport
 
@@ -154,13 +155,17 @@ def testar_conectividade(cert_pem: bytes, key_pem: bytes) -> dict:
 _NOMES_PARAMETRO_CANDIDATOS = ("arquivoXML", "nfeDadosMsg", "xml", "arquivo", "dadosMsg", "mensagemXML")
 
 
-def _chamar_operacao(operacao, xml_texto: str):
+def _chamar_operacao(operacao, xml_elemento):
+    """xml_elemento deve ser um lxml.etree._Element -- o parametro de entrada
+    e um xsd:any no WSDL, que o zeep so aceita como Element/dict/AnyObject,
+    nunca como string (confirmado por erro real: "Any element received
+    object of type 'str'...")."""
     try:
-        return operacao(xml_texto)
+        return operacao(xml_elemento)
     except TypeError:
         for nome_param in _NOMES_PARAMETRO_CANDIDATOS:
             try:
-                return operacao(**{nome_param: xml_texto})
+                return operacao(**{nome_param: xml_elemento})
             except TypeError:
                 continue
         raise
@@ -170,14 +175,13 @@ def enviar_lote(xml_lote: bytes, cert_pem: bytes, key_pem: bytes) -> ResultadoEn
     with _arquivos_cert_temporarios(cert_pem, key_pem) as (cert_path, key_path):
         client = _client_mtls(GNRE_LOTE_RECEPCAO_URL, cert_path, key_path)
         operacao = _resolver_operacao(client, OPERACOES_ENVIO_CANDIDATAS)
-        resposta = _chamar_operacao(operacao, xml_lote.decode("utf-8"))
+        elemento_xml = etree.fromstring(xml_lote)
+        resposta = _chamar_operacao(operacao, elemento_xml)
         resposta_texto = str(resposta)
         return ResultadoEnvioLote(protocolo=_extrair_numero_recibo(resposta_texto), resposta_bruta=resposta_texto)
 
 
 def _extrair_numero_recibo(resposta_texto: str) -> str | None:
-    from lxml import etree
-
     try:
         root = etree.fromstring(resposta_texto.encode("utf-8"))
     except etree.XMLSyntaxError:
@@ -199,6 +203,12 @@ _NOMES_PARAMETRO_PROTOCOLO_CANDIDATOS = ("numeroRecibo", "protocolo", "recibo", 
 
 
 def _chamar_operacao_protocolo(operacao, protocolo: str):
+    """Ainda nao testado contra o servico real -- se a operacao "processar"
+    do GnreResultadoLote tambem exigir um xsd:any (como a do GnreLoteRecepcao
+    exigiu), o protocolo provavelmente precisa ir dentro de um XML de
+    consulta em vez de string solta. Ajustar aqui igual foi feito em
+    enviar_lote() se o erro "Any element received object of type 'str'"
+    aparecer tambem nesta chamada."""
     try:
         return operacao(protocolo)
     except TypeError:
@@ -214,8 +224,6 @@ def _parsear_resultado_lote(resposta_texto: str) -> ResultadoConsultaLote:
     """Estrutura conferida contra o XSD oficial TResultLote_GNRE
     (app/schemas/lote_gnre_result_v2.00.xsd). Usa xpath por local-name() para
     ser tolerante ao namespace/wrapper exato que o zeep devolver."""
-    from lxml import etree
-
     situacao_codigo = None
     situacao_descricao = None
     guias: list[GuiaResultado] = []
