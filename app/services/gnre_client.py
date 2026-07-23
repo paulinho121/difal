@@ -30,11 +30,20 @@ GNRE_RESULTADO_LOTE_URL = os.getenv(
 )
 GNRE_CONFIG_UF_URL = os.getenv("GNRE_CONFIG_UF_URL", "https://www.gnre.pe.gov.br/gnreWS/services/GnreConfigUF")
 
-# Nomes candidatos, na ordem em que serao tentados (convencao comum em
-# webservices SOAP de SEFAZ/GNRE no Brasil: operacao recebe uma unica string
-# com o XML completo).
-OPERACOES_ENVIO_CANDIDATAS = ["gnreRecepcaoLote", "GnreRecepcaoLote", "recepcaoLote", "RecepcaoLote"]
-OPERACOES_RESULTADO_CANDIDATAS = ["gnreResultadoLote", "GnreResultadoLote", "resultadoLote", "ResultadoLote"]
+# Nomes candidatos, na ordem em que serao tentados. "processar" confirmado
+# como o nome real da operacao do GnreLoteRecepcao ao consultar o WSDL de
+# producao com um certificado real (listar_operacoes_disponiveis() via
+# /api/certificado/testar) -- os demais eram convencoes chutadas antes disso.
+# GnreResultadoLote nao foi confirmado ainda; mantido como suposicao pela
+# mesma convencao ate ser validado com uma consulta real.
+OPERACOES_ENVIO_CANDIDATAS = ["processar", "gnreRecepcaoLote", "GnreRecepcaoLote", "recepcaoLote", "RecepcaoLote"]
+OPERACOES_RESULTADO_CANDIDATAS = [
+    "processar",
+    "gnreResultadoLote",
+    "GnreResultadoLote",
+    "resultadoLote",
+    "ResultadoLote",
+]
 
 
 class GnreClientError(Exception):
@@ -139,11 +148,29 @@ def testar_conectividade(cert_pem: bytes, key_pem: bytes) -> dict:
         return {"ok": True, "operacoes_disponiveis": operacoes}
 
 
+# Nomes de parametro candidatos, para quando a operacao exige um argumento
+# nomeado em vez de posicional -- outro detalhe que so da pra confirmar com
+# uma chamada real (o WSDL exige mTLS pra ser inspecionado).
+_NOMES_PARAMETRO_CANDIDATOS = ("arquivoXML", "nfeDadosMsg", "xml", "arquivo", "dadosMsg", "mensagemXML")
+
+
+def _chamar_operacao(operacao, xml_texto: str):
+    try:
+        return operacao(xml_texto)
+    except TypeError:
+        for nome_param in _NOMES_PARAMETRO_CANDIDATOS:
+            try:
+                return operacao(**{nome_param: xml_texto})
+            except TypeError:
+                continue
+        raise
+
+
 def enviar_lote(xml_lote: bytes, cert_pem: bytes, key_pem: bytes) -> ResultadoEnvioLote:
     with _arquivos_cert_temporarios(cert_pem, key_pem) as (cert_path, key_path):
         client = _client_mtls(GNRE_LOTE_RECEPCAO_URL, cert_path, key_path)
         operacao = _resolver_operacao(client, OPERACOES_ENVIO_CANDIDATAS)
-        resposta = operacao(xml_lote.decode("utf-8"))
+        resposta = _chamar_operacao(operacao, xml_lote.decode("utf-8"))
         resposta_texto = str(resposta)
         return ResultadoEnvioLote(protocolo=_extrair_numero_recibo(resposta_texto), resposta_bruta=resposta_texto)
 
@@ -163,9 +190,24 @@ def consultar_resultado_lote(protocolo: str, cert_pem: bytes, key_pem: bytes) ->
     with _arquivos_cert_temporarios(cert_pem, key_pem) as (cert_path, key_path):
         client = _client_mtls(GNRE_RESULTADO_LOTE_URL, cert_path, key_path)
         operacao = _resolver_operacao(client, OPERACOES_RESULTADO_CANDIDATAS)
-        resposta = operacao(protocolo)
+        resposta = _chamar_operacao_protocolo(operacao, protocolo)
         resposta_texto = str(resposta)
         return _parsear_resultado_lote(resposta_texto)
+
+
+_NOMES_PARAMETRO_PROTOCOLO_CANDIDATOS = ("numeroRecibo", "protocolo", "recibo", "nfeRecibo")
+
+
+def _chamar_operacao_protocolo(operacao, protocolo: str):
+    try:
+        return operacao(protocolo)
+    except TypeError:
+        for nome_param in _NOMES_PARAMETRO_PROTOCOLO_CANDIDATOS:
+            try:
+                return operacao(**{nome_param: protocolo})
+            except TypeError:
+                continue
+        raise
 
 
 def _parsear_resultado_lote(resposta_texto: str) -> ResultadoConsultaLote:
