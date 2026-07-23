@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Upload de XML - GNRE.Flow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: {
+                    "colors": {"on-background":"#131b2e","surface-container-low":"#f2f3ff","on-surface":"#131b2e","on-tertiary":"#ffffff","on-secondary-container":"#54647a","on-tertiary-fixed-variant":"#444749","on-tertiary-container":"#e2e4e6","surface-bright":"#faf8ff","outline":"#737688","inverse-on-surface":"#eef0ff","secondary-fixed":"#d3e4fe","background":"#faf8ff","surface-container":"#eaedff","inverse-primary":"#b7c4ff","on-primary-fixed":"#001452","surface-tint":"#004ced","on-primary":"#ffffff","secondary":"#505f76","primary":"#003ec7","secondary-fixed-dim":"#b7c8e1","on-primary-fixed-variant":"#0038b6","tertiary-fixed":"#e0e3e5","on-secondary-fixed-variant":"#38485d","on-secondary":"#ffffff","surface-container-high":"#e2e7ff","primary-fixed-dim":"#b7c4ff","outline-variant":"#c3c5d9","surface-dim":"#d2d9f4","surface":"#faf8ff","surface-container-highest":"#dae2fd","surface-container-lowest":"#ffffff","on-error-container":"#93000a","tertiary":"#4b4e50","error-container":"#ffdad6","tertiary-container":"#636668","surface-variant":"#dae2fd","error":"#ba1a1a","primary-fixed":"#dde1ff"},
+                    "borderRadius": {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+                    "spacing": {"gutter":"24px","container-max":"1440px","stack-xl":"48px","unit":"4px","stack-xs":"4px","margin-desktop":"32px","margin-mobile":"16px","stack-sm":"8px","stack-md":"16px","stack-lg":"24px"},
+                    "fontFamily": {"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-lg":["Inter"],"body-sm":["Inter"],"display-lg":["Inter"],"headline-md":["Inter"],"body-md":["Inter"]},
+                    "fontSize": {"label-md":["13px",{"lineHeight":"16px","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","fontWeight":"500"}],"body-lg":["18px",{"lineHeight":"28px","fontWeight":"400"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}]}
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; vertical-align: middle; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .dropzone-active { border-color: #004ced; background-color: rgba(0, 76, 237, 0.05); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<header class="fixed top-0 w-full backdrop-blur-md z-50 bg-surface-container-lowest/80 border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-stack-sm w-full max-w-container-max mx-auto h-16">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Upload de XML</h1>
+</div>
+</div>
+</header>
+<main class="flex-grow pt-24 pb-32 px-margin-mobile md:px-margin-desktop w-full max-w-4xl mx-auto">
+<div class="mb-stack-xl text-center">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Processamento de DIFAL</h2>
+<p class="text-on-surface-variant font-body-md">Envie o XML da NF-e de venda interestadual para calcular o DIFAL/FCP e gerar a guia GNRE.</p>
+</div>
+<div class="glass-panel rounded-xl p-stack-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center transition-all cursor-pointer group hover:border-primary" id="dropzone">
+<input accept=".xml" class="hidden" id="fileInput" multiple="" type="file"/>
+<div class="mb-stack-lg relative">
+<div class="w-24 h-24 bg-primary-container/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary text-5xl" style="font-variation-settings: 'wght' 300;">cloud_upload</span>
+</div>
+</div>
+<div class="text-center">
+<p class="font-headline-md text-headline-md text-on-surface mb-2">Arraste seus XMLs da NF-e aqui</p>
+<p class="text-on-surface-variant font-body-sm">ou toque para selecionar arquivos em seu computador</p>
+</div>
+<div class="mt-stack-lg flex gap-stack-md text-on-secondary-container">
+<span class="flex items-center gap-1 font-label-md text-label-md"><span class="material-symbols-outlined text-sm">check_circle</span> Múltiplos arquivos</span>
+<span class="flex items-center gap-1 font-label-md text-label-md"><span class="material-symbols-outlined text-sm">check_circle</span> Formato .xml</span>
+</div>
+</div>
+<section class="mt-stack-xl hidden" id="fileListSection">
+<div class="flex items-center justify-between mb-stack-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">Arquivos selecionados (<span id="fileCount">0</span>)</h3>
+<button class="text-primary font-label-md text-label-md hover:underline" id="clearAll">Remover todos</button>
+</div>
+<div class="space-y-stack-md" id="fileContainer"></div>
+<div class="mt-stack-xl flex justify-center">
+<button class="bg-primary text-on-primary px-stack-xl py-4 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:bg-on-primary-fixed-variant active:scale-95 transition-all" id="processBtn">
+                    Calcular DIFAL/FCP
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</section>
+<section class="mt-stack-xl hidden" id="resultadosSection">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-stack-md">Resultado do processamento</h3>
+<div class="space-y-stack-md" id="resultadosContainer"></div>
+</section>
+</main>
+<script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileListSection = document.getElementById('fileListSection');
+        const fileContainer = document.getElementById('fileContainer');
+        const fileCountSpan = document.getElementById('fileCount');
+        const clearAllBtn = document.getElementById('clearAll');
+        const resultadosSection = document.getElementById('resultadosSection');
+        const resultadosContainer = document.getElementById('resultadosContainer');
+
+        let files = [];
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dropzone-active'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dropzone-active'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dropzone-active');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(newFiles) {
+            files = [...files, ...Array.from(newFiles)];
+            updateUI();
+        }
+
+        function updateUI() {
+            if (files.length > 0) {
+                fileListSection.classList.remove('hidden');
+                fileCountSpan.innerText = files.length;
+                fileContainer.innerHTML = '';
+                files.forEach((file, index) => {
+                    const fileSize = (file.size / 1024).toFixed(1) + ' KB';
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'glass-panel p-stack-md rounded-lg flex items-center justify-between';
+                    fileItem.innerHTML = `
+                        <div class="flex items-center gap-stack-md">
+                            <span class="material-symbols-outlined text-primary">description</span>
+                            <div>
+                                <p class="font-body-md font-bold text-on-surface truncate max-w-[200px] md:max-w-md">${file.name}</p>
+                                <p class="text-on-surface-variant text-xs font-label-md">${fileSize}</p>
+                            </div>
+                        </div>
+                        <button onclick="removeFile(${index})" class="text-on-secondary-container hover:text-error transition-colors">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>`;
+                    fileContainer.appendChild(fileItem);
+                });
+            } else {
+                fileListSection.classList.add('hidden');
+            }
+        }
+
+        window.removeFile = (index) => { files.splice(index, 1); updateUI(); };
+        clearAllBtn.addEventListener('click', () => { files = []; updateUI(); });
+
+        function fmtMoeda(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+        function renderResultado(r) {
+            if (!r.sucesso) {
+                return `<div class="glass-panel p-stack-md rounded-lg border-l-4 border-l-error">
+                    <p class="font-bold text-error">${r.arquivo}</p>
+                    <p class="text-body-sm text-on-surface-variant">${r.erro}</p>
+                </div>`;
+            }
+            const avisos = (r.avisos || []).map(a => `<li class="text-amber-700">${a}</li>`).join('');
+            const semSuporte = !r.uf_suportada;
+            const corBorda = semSuporte ? 'border-l-error' : (r.divergente ? 'border-l-amber-500' : 'border-l-green-500');
+            return `<div class="glass-panel p-stack-md rounded-lg border-l-4 ${corBorda}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-bold text-on-surface">${r.arquivo}</p>
+                        <p class="text-body-sm text-on-surface-variant">NF-e ${r.chave_acesso} • UF destino ${r.uf_destino}</p>
+                    </div>
+                    <span class="text-xs font-label-sm px-2 py-1 rounded-full ${semSuporte ? 'bg-error-container/30 text-error' : 'bg-green-100 text-green-700'}">
+                        ${semSuporte ? 'UF não suportada' : 'Calculado'}
+                    </span>
+                </div>
+                <div class="grid grid-cols-3 gap-stack-md mt-stack-md text-center">
+                    <div><p class="text-label-sm text-on-surface-variant">DIFAL</p><p class="font-label-md font-bold">${fmtMoeda(r.valor_difal)}</p></div>
+                    <div><p class="text-label-sm text-on-surface-variant">FCP</p><p class="font-label-md font-bold">${fmtMoeda(r.valor_fcp)}</p></div>
+                    <div><p class="text-label-sm text-on-surface-variant">Total</p><p class="font-label-md font-bold text-primary">${fmtMoeda(r.valor_total)}</p></div>
+                </div>
+                ${avisos ? `<ul class="mt-stack-md text-xs list-disc list-inside space-y-1">${avisos}</ul>` : ''}
+                ${!semSuporte ? `<div class="mt-stack-md flex justify-end">
+                    <button onclick="confirmarGuia(${r.guia_id}, this)" class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md hover:brightness-110">
+                        Revisar e confirmar emissão
+                    </button>
+                </div>` : ''}
+            </div>`;
+        }
+
+        window.confirmarGuia = async (guiaId, btn) => {
+            btn.disabled = true;
+            btn.textContent = 'Enviando ao GNRE...';
+            const resp = await fetch(`/api/guias/${guiaId}/confirmar`, { method: 'POST' });
+            const guia = await resp.json();
+            if (guia.status === 'erro') {
+                btn.textContent = 'Falhou — ver Histórico';
+                btn.classList.add('bg-error');
+            } else {
+                btn.textContent = 'Enviado! Ver em Histórico';
+            }
+            btn.onclick = () => window.location.href = '/historico';
+        };
+
+        document.getElementById('processBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('processBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> Processando...`;
+
+            const formData = new FormData();
+            files.forEach(f => formData.append('files', f));
+
+            try {
+                const resp = await fetch('/api/xml/upload', { method: 'POST', body: formData });
+                const data = await resp.json();
+                resultadosSection.classList.remove('hidden');
+                resultadosContainer.innerHTML = data.resultados.map(renderResultado).join('');
+                files = [];
+                updateUI();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `Calcular DIFAL/FCP <span class="material-symbols-outlined">arrow_forward</span>`;
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,41 @@
+{
+  "_observacao": "Aliquotas internas de ICMS e FCP por UF, usadas SOMENTE como camada de verificacao/alerta para o valor de DIFAL/FCP que ja vem declarado na propria NF-e (grupo ICMSUFDest). NAO sao usadas como fonte primaria do valor da guia. Aliquotas mudam por lei estadual com frequencia (varias UFs reajustaram entre 2023 e 2025) -- revise e atualize estes valores periodicamente antes de confiar nos alertas de divergencia.",
+  "atualizado_em": "2026-07-23",
+  "tolerancia_divergencia_percentual": 5.0,
+  "ufs": {
+    "AC": {"aliquota_padrao": 19.0, "fcp_padrao": 2.0},
+    "AL": {"aliquota_padrao": 19.0, "fcp_padrao": 2.0},
+    "AP": {"aliquota_padrao": 18.0, "fcp_padrao": 0.0},
+    "AM": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
+    "BA": {"aliquota_padrao": 19.5, "fcp_padrao": 2.0},
+    "CE": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
+    "DF": {"aliquota_padrao": 20.0, "fcp_padrao": 0.0},
+    "ES": {"aliquota_padrao": 17.0, "fcp_padrao": 2.0},
+    "GO": {"aliquota_padrao": 19.0, "fcp_padrao": 0.0},
+    "MA": {"aliquota_padrao": 22.0, "fcp_padrao": 2.0},
+    "MT": {"aliquota_padrao": 17.0, "fcp_padrao": 2.0},
+    "MS": {"aliquota_padrao": 17.0, "fcp_padrao": 0.0},
+    "MG": {"aliquota_padrao": 18.0, "fcp_padrao": 2.0},
+    "PA": {"aliquota_padrao": 19.0, "fcp_padrao": 2.0},
+    "PB": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
+    "PR": {"aliquota_padrao": 19.5, "fcp_padrao": 2.0},
+    "PE": {"aliquota_padrao": 20.5, "fcp_padrao": 2.0},
+    "PI": {"aliquota_padrao": 21.0, "fcp_padrao": 2.0},
+    "RJ": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
+    "RN": {"aliquota_padrao": 18.0, "fcp_padrao": 2.0},
+    "RS": {"aliquota_padrao": 17.0, "fcp_padrao": 2.0},
+    "RO": {"aliquota_padrao": 19.5, "fcp_padrao": 0.0},
+    "RR": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
+    "SC": {"aliquota_padrao": 17.0, "fcp_padrao": 0.0},
+    "SP": {"aliquota_padrao": 18.0, "fcp_padrao": 0.0},
+    "SE": {"aliquota_padrao": 19.0, "fcp_padrao": 2.0},
+    "TO": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0}
+  },
+  "excecoes_ncm": {
+    "_observacao": "Preencha aqui prefixos de NCM com aliquota interna diferente da padrao da UF (ex.: itens de cesta basica, supergerfluos, energia, combustiveis). Formato: 'UF': {'PREFIXO_NCM': aliquota}"
+  },
+  "ufs_sem_gnre_nacional": {
+    "_observacao": "Estas UFs nao usam o Portal Nacional GNRE para tributos proprios -- exigem guia estadual especifica (ex.: GARE-ICMS em SP, DARJ no RJ). O sistema deve avisar em vez de tentar enviar.",
+    "lista": ["SP", "RJ", "ES", "GO"]
+  }
+}

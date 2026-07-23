@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Histórico de Guias - GNRE.Flow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: {
+            "colors": {"on-background":"#131b2e","surface-container-low":"#f2f3ff","on-surface":"#131b2e","on-tertiary":"#ffffff","on-secondary-container":"#54647a","surface-bright":"#faf8ff","outline":"#737688","background":"#faf8ff","surface-container":"#eaedff","on-primary":"#ffffff","secondary":"#505f76","primary":"#003ec7","outline-variant":"#c3c5d9","surface":"#faf8ff","surface-container-highest":"#dae2fd","surface-container-lowest":"#ffffff","tertiary":"#4b4e50","surface-variant":"#dae2fd","error":"#ba1a1a","on-surface-variant":"#434656"},
+            "borderRadius": {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+            "spacing": {"gutter":"24px","container-max":"1440px","stack-xl":"48px","margin-desktop":"32px","margin-mobile":"16px","stack-sm":"8px","stack-md":"16px","stack-lg":"24px"},
+            "fontFamily": {"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-md":["Inter"],"body-md":["Inter"]},
+            "fontSize": {"label-md":["13px",{"lineHeight":"16px","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","fontWeight":"500"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}]}
+        }}}
+    </script>
+<style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .row-expanded { max-height: 500px; opacity: 1; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+        .row-collapsed { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased">
+<header class="fixed top-0 w-full z-50 border-b border-outline-variant/30 shadow-sm bg-surface-container-lowest/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-stack-sm w-full max-w-container-max mx-auto h-16">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">GNRE.Flow</h1>
+</div>
+<nav class="hidden md:flex gap-stack-lg">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary" href="/">Dashboard</a>
+<a class="font-label-md text-label-md text-primary font-bold" href="/historico">Histórico</a>
+</nav>
+</div>
+</header>
+<main class="pt-24 pb-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<section class="mb-stack-xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Histórico de Emissões</h2>
+<p class="text-on-surface-variant font-body-sm">Gerencie e visualize todas as guias processadas no sistema.</p>
+</div>
+<a href="/upload" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md shadow-sm hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span> Nova Emissão
+</a>
+</div>
+<div class="mt-stack-lg p-stack-md bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm flex flex-col md:flex-row gap-stack-md">
+<div class="relative flex-grow">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-surface-bright border border-outline-variant rounded-lg outline-none text-body-sm" id="busca" placeholder="Buscar por destinatário, NF-e ou guia..." type="text"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline mb-1 ml-1">UF</span>
+<select class="bg-surface-bright border border-outline-variant rounded-lg px-3 py-2 text-body-sm outline-none min-w-[80px]" id="filtroUf">
+<option value="">Todas</option>
+</select>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline mb-1 ml-1">Status</span>
+<select class="bg-surface-bright border border-outline-variant rounded-lg px-3 py-2 text-body-sm outline-none min-w-[140px]" id="filtroStatus">
+<option value="">Todos</option>
+<option value="aguardando_confirmacao">Aguardando confirmação</option>
+<option value="enviada">Enviada</option>
+<option value="emitida">Emitida</option>
+<option value="erro">Erro</option>
+</select>
+</div>
+</div>
+</section>
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+<div class="hidden md:grid grid-cols-12 gap-gutter px-stack-lg py-stack-md bg-surface-container-low/50 border-b border-outline-variant/30 font-label-md text-outline uppercase tracking-wider">
+<div class="col-span-2">Data</div>
+<div class="col-span-4">Destinatário</div>
+<div class="col-span-1 text-center">UF</div>
+<div class="col-span-2 text-right">Valor (R$)</div>
+<div class="col-span-2 text-center">Status</div>
+<div class="col-span-1"></div>
+</div>
+<div class="divide-y divide-outline-variant/20" id="lista-guias">
+<div class="p-stack-lg text-center text-on-surface-variant/50">Carregando…</div>
+</div>
+</section>
+</main>
+<script>
+        const STATUS_LABEL = {
+            calculada: 'Calculada', aguardando_confirmacao: 'Aguardando confirmação',
+            enviada: 'Enviada', emitida: 'Emitida', erro: 'Erro',
+        };
+        const STATUS_COR = {
+            calculada: 'bg-surface-variant text-on-surface-variant',
+            aguardando_confirmacao: 'bg-amber-100 text-amber-700',
+            enviada: 'bg-blue-100 text-blue-700',
+            emitida: 'bg-green-100 text-green-700',
+            erro: 'bg-red-100 text-red-700',
+        };
+        const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
+
+        const filtroUf = document.getElementById('filtroUf');
+        UFS.forEach(uf => filtroUf.innerHTML += `<option value="${uf}">${uf}</option>`);
+
+        function fmtMoeda(v) { return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        function fmtData(iso) {
+            if (!iso) return '--';
+            // Datas "somente data" (YYYY-MM-DD) devem ser lidas como horario
+            // local, senao o Date() as interpreta como UTC meia-noite e
+            // toLocaleDateString mostra um dia a menos em fusos negativos.
+            const soData = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (soData) {
+                return new Date(+soData[1], +soData[2] - 1, +soData[3]).toLocaleDateString('pt-BR');
+            }
+            return new Date(iso).toLocaleDateString('pt-BR');
+        }
+
+        function renderGuia(g) {
+            const cor = STATUS_COR[g.status] || 'bg-surface-variant text-on-surface-variant';
+            const label = STATUS_LABEL[g.status] || g.status;
+            let acoes = '';
+            if (g.status === 'aguardando_confirmacao') {
+                acoes = `<button onclick="confirmar(${g.id})" class="px-3 py-2 bg-primary text-on-primary rounded-lg font-label-md text-xs">Revisar e confirmar</button>`;
+            } else if (g.status === 'enviada') {
+                acoes = `<button onclick="atualizarStatus(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Atualizar Status</button>`;
+            } else if (g.status === 'erro') {
+                acoes = `<button onclick="reemitir(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Reemitir</button>`;
+            } else if (g.status === 'emitida' && g.tem_pdf) {
+                acoes = `<a href="/api/guias/${g.id}/pdf" class="px-3 py-2 bg-primary text-on-primary rounded-lg font-label-md text-xs">Download PDF</a>`;
+            }
+
+            const detalhe = `
+                <div class="px-stack-lg py-stack-lg grid grid-cols-1 md:grid-cols-3 gap-stack-lg border-t border-outline-variant/10 text-sm">
+                    <div class="space-y-2">
+                        <div><span class="text-label-sm text-outline block">Chave NF-e</span><span class="font-label-md break-all">${g.nota_fiscal.chave_acesso}</span></div>
+                        <div><span class="text-label-sm text-outline block">Destinatário</span><span>${g.nota_fiscal.destinatario_nome || '--'} (${g.nota_fiscal.destinatario_doc || '--'})</span></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div><span class="text-label-sm text-outline block">DIFAL / FCP</span><span>${fmtMoeda(g.valor_difal)} / ${fmtMoeda(g.valor_fcp)}</span></div>
+                        <div><span class="text-label-sm text-outline block">Vencimento</span><span>${fmtData(g.data_vencimento)}</span></div>
+                        ${g.linha_digitavel ? `<div><span class="text-label-sm text-outline block">Linha digitável</span><span class="font-label-md text-xs break-all">${g.linha_digitavel}</span></div>` : ''}
+                        ${g.protocolo_lote ? `<div><span class="text-label-sm text-outline block">Protocolo do lote</span><span>${g.protocolo_lote}</span></div>` : ''}
+                    </div>
+                    <div class="flex flex-col gap-2 justify-center">
+                        ${g.mensagem_erro ? `<div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">${g.mensagem_erro}</div>` : ''}
+                        ${acoes}
+                    </div>
+                </div>`;
+
+            return `<div class="group">
+                <div class="grid grid-cols-4 md:grid-cols-12 gap-gutter px-stack-lg py-stack-md items-center cursor-pointer hover:bg-surface-container-low/30 transition-colors" onclick="toggleExpand(${g.id})">
+                    <div class="col-span-2 md:col-span-2 font-label-md text-label-md">${fmtData(g.criado_em)}</div>
+                    <div class="col-span-2 md:col-span-4 flex flex-col">
+                        <span class="font-body-md font-semibold text-on-surface truncate">${g.nota_fiscal.destinatario_nome || 'Destinatário'}</span>
+                        <span class="text-label-sm text-outline font-label-sm hidden md:block">NF-e ${g.nota_fiscal.numero || '--'}/${g.nota_fiscal.serie || '--'}</span>
+                    </div>
+                    <div class="hidden md:block col-span-1 text-center"><span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-md font-label-md">${g.uf_favorecida || '--'}</span></div>
+                    <div class="hidden md:block col-span-2 text-right font-label-md text-label-md">${fmtMoeda(g.valor_total)}</div>
+                    <div class="col-span-2 md:col-span-2 flex justify-center"><span class="px-3 py-1 ${cor} rounded-full font-label-sm">${label}</span></div>
+                    <div class="col-span-2 md:col-span-1 flex justify-end"><span class="material-symbols-outlined text-outline" id="icon-${g.id}">expand_more</span></div>
+                </div>
+                <div class="row-collapsed" id="detail-${g.id}">${detalhe}</div>
+            </div>`;
+        }
+
+        window.toggleExpand = (id) => {
+            const detail = document.getElementById('detail-' + id);
+            const icon = document.getElementById('icon-' + id);
+            if (detail.classList.contains('row-collapsed')) {
+                detail.classList.remove('row-collapsed'); detail.classList.add('row-expanded');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                detail.classList.remove('row-expanded'); detail.classList.add('row-collapsed');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        };
+
+        window.confirmar = async (id) => { await fetch(`/api/guias/${id}/confirmar`, { method: 'POST' }); carregarLista(); };
+        window.atualizarStatus = async (id) => { await fetch(`/api/guias/${id}/atualizar-status`, { method: 'POST' }); carregarLista(); };
+        window.reemitir = async (id) => { await fetch(`/api/guias/${id}/reemitir`, { method: 'POST' }); carregarLista(); };
+
+        async function carregarLista() {
+            const params = new URLSearchParams();
+            if (filtroUf.value) params.set('uf', filtroUf.value);
+            if (document.getElementById('filtroStatus').value) params.set('status', document.getElementById('filtroStatus').value);
+            if (document.getElementById('busca').value) params.set('busca', document.getElementById('busca').value);
+
+            const data = await fetch('/api/guias?' + params.toString()).then(r => r.json());
+            const container = document.getElementById('lista-guias');
+            if (data.guias.length === 0) {
+                container.innerHTML = '<div class="p-stack-lg text-center text-on-surface-variant/50">Nenhuma guia encontrada.</div>';
+            } else {
+                container.innerHTML = data.guias.map(renderGuia).join('');
+            }
+        }
+
+        filtroUf.addEventListener('change', carregarLista);
+        document.getElementById('filtroStatus').addEventListener('change', carregarLista);
+        document.getElementById('busca').addEventListener('input', () => {
+            clearTimeout(window._buscaTimeout);
+            window._buscaTimeout = setTimeout(carregarLista, 300);
+        });
+
+        carregarLista();
+    </script>
+</body></html>

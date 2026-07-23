@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GNRE.Flow - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: { extend: {
+              "colors": {"on-background":"#131b2e","surface-container-low":"#f2f3ff","on-surface":"#131b2e","on-tertiary":"#ffffff","on-secondary-container":"#54647a","on-tertiary-fixed-variant":"#444749","on-tertiary-container":"#e2e4e6","surface-bright":"#faf8ff","outline":"#737688","inverse-on-surface":"#eef0ff","secondary-fixed":"#d3e4fe","background":"#faf8ff","surface-container":"#eaedff","inverse-primary":"#b7c4ff","on-primary-fixed":"#001452","surface-tint":"#004ced","on-primary":"#ffffff","secondary":"#505f76","primary":"#003ec7","secondary-fixed-dim":"#b7c8e1","on-primary-fixed-variant":"#0038b6","tertiary-fixed":"#e0e3e5","on-secondary-fixed-variant":"#38485d","on-secondary":"#ffffff","surface-container-high":"#e2e7ff","primary-fixed-dim":"#b7c4ff","outline-variant":"#c3c5d9","surface-dim":"#d2d9f4","surface":"#faf8ff","surface-container-highest":"#dae2fd","surface-container-lowest":"#ffffff","on-error-container":"#93000a","tertiary":"#4b4e50","error-container":"#ffdad6","tertiary-fixed-dim":"#c4c7c9","primary-container":"#0052ff","inverse-surface":"#283044","on-primary-container":"#dfe3ff","on-tertiary-fixed":"#191c1e","on-secondary-fixed":"#0b1c30","secondary-container":"#d0e1fb","on-error":"#ffffff","on-surface-variant":"#434656","tertiary-container":"#636668","surface-variant":"#dae2fd","error":"#ba1a1a","primary-fixed":"#dde1ff"},
+              "borderRadius": {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+              "spacing": {"gutter":"24px","container-max":"1440px","stack-xl":"48px","unit":"4px","stack-xs":"4px","margin-desktop":"32px","margin-mobile":"16px","stack-sm":"8px","stack-md":"16px","stack-lg":"24px"},
+              "fontFamily": {"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-lg":["Inter"],"body-sm":["Inter"],"display-lg":["Inter"],"headline-md":["Inter"],"body-md":["Inter"]},
+              "fontSize": {"label-md":["13px",{"lineHeight":"16px","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","fontWeight":"500"}],"body-lg":["18px",{"lineHeight":"28px","fontWeight":"400"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}]}
+          }}
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-24">
+<nav class="fixed top-0 w-full backdrop-blur-md z-50 bg-surface-container-lowest/80 border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-stack-sm w-full max-w-container-max mx-auto">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-primary text-[28px]">account_balance_wallet</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">GNRE.Flow</h1>
+</div>
+</div>
+</nav>
+<main class="pt-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto w-full">
+<header class="mb-stack-xl">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Dashboard Fiscal</h2>
+<p class="font-body-md text-body-md text-on-secondary-container">Visão geral das suas operações de GNRE hoje.</p>
+</header>
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-stack-lg mb-stack-xl">
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-stack-md">
+<span class="material-symbols-outlined text-primary">cloud_upload</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">XMLs enviados</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface" id="kpi-xmls">–</div>
+</div>
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-stack-md">
+<span class="material-symbols-outlined text-tertiary">description</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Guias emitidas</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface" id="kpi-emitidas">–</div>
+</div>
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm hover:shadow-md transition-all border-l-4 border-l-error/40">
+<div class="flex items-center justify-between mb-stack-md">
+<span class="material-symbols-outlined text-error">pending_actions</span>
+<span class="text-xs font-label-sm px-2 py-1 bg-error-container/20 text-error rounded-full">Atenção</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Guias pendentes</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface" id="kpi-pendentes">–</div>
+</div>
+<div class="bg-primary text-on-primary p-stack-lg rounded-xl shadow-lg hover:translate-y-[-2px] transition-all overflow-hidden relative">
+<div class="absolute -right-4 -top-4 opacity-20"><span class="material-symbols-outlined text-[120px]">bolt</span></div>
+<div class="relative z-10">
+<div class="flex items-center mb-stack-md"><span class="material-symbols-outlined mr-2">schedule</span></div>
+<div class="font-label-sm text-label-sm text-on-primary/80 mb-1">Economia de tempo estimada</div>
+<div class="font-headline-md text-headline-md font-bold" id="kpi-tempo">–</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-stack-lg">
+<div class="lg:col-span-2 bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm">
+<div class="flex justify-between items-center mb-stack-lg">
+<h3 class="font-headline-md text-headline-md text-[18px]">Guias emitidas por dia</h3>
+</div>
+<div class="h-64 flex items-end justify-between gap-2 px-2" id="chart-container">
+<div class="w-full text-center text-on-surface-variant/50 text-sm self-center">Sem dados ainda — processe um XML para começar.</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm flex flex-col">
+<div class="flex justify-between items-center mb-stack-lg">
+<h3 class="font-headline-md text-headline-md text-[18px]">Histórico recente</h3>
+<a class="text-primary text-xs font-label-md hover:underline" href="/historico">Ver tudo</a>
+</div>
+<div class="space-y-stack-md flex-1" id="historico-recente">
+<div class="text-on-surface-variant/50 text-sm">Carregando…</div>
+</div>
+</div>
+</div>
+<div class="mt-stack-xl p-stack-xl bg-surface-container rounded-2xl border border-primary/10 overflow-hidden relative group">
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-stack-lg">
+<div class="text-center md:text-left">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Pronto para novas emissões?</h3>
+<p class="font-body-sm text-body-sm text-on-secondary-container max-w-md">Envie seus arquivos XML agora e deixe o GNRE.Flow processar tudo automaticamente com segurança e rapidez.</p>
+</div>
+<a href="/upload" class="bg-primary text-on-primary px-stack-lg py-stack-md rounded-xl font-semibold flex items-center gap-stack-sm shadow-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+                    Nova Emissão
+                </a>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 w-full z-50 backdrop-blur-lg bg-surface-container-lowest/90 border-t border-outline-variant/30 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+<div class="flex justify-around items-center h-16 w-full px-4 pb-safe max-w-container-max mx-auto">
+<a class="flex flex-col items-center justify-center text-primary bg-primary-container/10 rounded-xl px-3 py-1" href="/">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-colors" href="/upload">
+<span class="material-symbols-outlined text-[24px]">cloud_upload</span>
+<span class="font-label-sm text-label-sm">Upload</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-colors" href="/historico">
+<span class="material-symbols-outlined text-[24px]">history</span>
+<span class="font-label-sm text-label-sm">Histórico</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-colors" href="/certificado">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<span class="font-label-sm text-label-sm">Ajustes</span>
+</a>
+</div>
+</nav>
+<script>
+        function fmtMoeda(v) {
+            return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        async function carregarDashboard() {
+            const stats = await fetch('/api/dashboard/stats').then(r => r.json());
+            document.getElementById('kpi-xmls').textContent = stats.xmls_processados;
+            document.getElementById('kpi-emitidas').textContent = stats.guias_emitidas;
+            document.getElementById('kpi-pendentes').textContent = stats.guias_pendentes;
+            document.getElementById('kpi-tempo').textContent = stats.tempo_economizado_horas + 'h';
+
+            if (stats.emissoes_por_dia && stats.emissoes_por_dia.length > 0) {
+                const container = document.getElementById('chart-container');
+                const max = Math.max(...stats.emissoes_por_dia.map(d => d.quantidade), 1);
+                container.innerHTML = '';
+                stats.emissoes_por_dia.slice(-7).forEach(d => {
+                    const pct = Math.max(8, Math.round((d.quantidade / max) * 100));
+                    const bar = document.createElement('div');
+                    bar.className = 'flex-1 bg-primary/40 hover:bg-primary/70 transition-colors rounded-t-lg relative group';
+                    bar.style.height = pct + '%';
+                    bar.innerHTML = `<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">${d.dia}: ${d.quantidade}</div>`;
+                    container.appendChild(bar);
+                });
+            }
+
+            const guias = await fetch('/api/guias').then(r => r.json());
+            const recentes = guias.guias.slice(0, 3);
+            const historicoEl = document.getElementById('historico-recente');
+            if (recentes.length === 0) {
+                historicoEl.innerHTML = '<div class="text-on-surface-variant/50 text-sm">Nenhuma guia processada ainda.</div>';
+            } else {
+                historicoEl.innerHTML = recentes.map(g => `
+                    <div class="p-stack-md rounded-lg bg-surface-container-low/40 border border-outline-variant/10 flex items-center gap-stack-md">
+                        <div class="w-10 h-10 rounded-lg bg-on-primary-container flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-[20px]">description</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-semibold truncate">${g.nota_fiscal.destinatario_nome || 'Destinatário'}</div>
+                            <div class="text-[11px] font-label-md text-on-surface-variant">${g.uf_favorecida || '--'} • ${fmtMoeda(g.valor_total)}</div>
+                        </div>
+                        <div class="text-[10px] font-label-sm bg-surface-bright text-on-surface-variant px-2 py-0.5 rounded border border-outline-variant/20">${g.status}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        carregarDashboard();
+    </script>
+</body></html>

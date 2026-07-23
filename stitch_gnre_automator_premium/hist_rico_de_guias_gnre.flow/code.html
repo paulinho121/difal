@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#131b2e",
+                        "surface-container-low": "#f2f3ff",
+                        "on-surface": "#131b2e",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#54647a",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "on-tertiary-container": "#e2e4e6",
+                        "surface-bright": "#faf8ff",
+                        "outline": "#737688",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary-fixed": "#d3e4fe",
+                        "background": "#faf8ff",
+                        "surface-container": "#eaedff",
+                        "inverse-primary": "#b7c4ff",
+                        "on-primary-fixed": "#001452",
+                        "surface-tint": "#004ced",
+                        "on-primary": "#ffffff",
+                        "secondary": "#505f76",
+                        "primary": "#003ec7",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-primary-fixed-variant": "#0038b6",
+                        "tertiary-fixed": "#e0e3e5",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e2e7ff",
+                        "primary-fixed-dim": "#b7c4ff",
+                        "outline-variant": "#c3c5d9",
+                        "surface-dim": "#d2d9f4",
+                        "surface": "#faf8ff",
+                        "surface-container-highest": "#dae2fd",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#4b4e50",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "primary-container": "#0052ff",
+                        "inverse-surface": "#283044",
+                        "on-primary-container": "#dfe3ff",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-secondary-fixed": "#0b1c30",
+                        "secondary-container": "#d0e1fb",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#434656",
+                        "tertiary-container": "#636668",
+                        "surface-variant": "#dae2fd",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#dde1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "stack-xl": "48px",
+                        "unit": "4px",
+                        "stack-xs": "4px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .row-expanded {
+            max-height: 500px;
+            opacity: 1;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .row-collapsed {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased">
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 w-full glass-header z-50 border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-stack-sm w-full max-w-container-max mx-auto h-16">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance_wallet">account_balance_wallet</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">GNRE.Flow</h1>
+</div>
+<div class="flex items-center gap-stack-lg">
+<nav class="hidden md:flex gap-stack-lg">
+<a class="font-label-md text-label-md text-primary font-bold" href="#">Dashboard</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Relatórios</a>
+</nav>
+<div class="flex items-center gap-stack-md">
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">
+                        AF
+                    </div>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<!-- Header & Search -->
+<section class="mb-stack-xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Histórico de Emissões</h2>
+<p class="text-on-surface-variant font-body-sm">Gerencie e visualize todas as guias processadas no sistema.</p>
+</div>
+<div class="flex flex-wrap gap-stack-sm">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md shadow-sm hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                        Nova Emissão
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-lg font-label-md hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="file_download">file_download</span>
+                        Exportar CSV
+                    </button>
+</div>
+</div>
+<!-- Filters Bar -->
+<div class="mt-stack-lg p-stack-md bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm flex flex-col md:flex-row gap-stack-md">
+<div class="relative flex-grow">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-[20px]" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-surface-bright border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-body-sm" placeholder="Buscar por empresa, NF-e ou guia..." type="text"/>
+</div>
+<div class="flex gap-stack-sm overflow-x-auto pb-1 md:pb-0 custom-scrollbar">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline mb-1 ml-1">Data</span>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-primary/20 outline-none" type="date"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline mb-1 ml-1">UF</span>
+<select class="bg-surface-bright border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-primary/20 outline-none min-w-[80px]">
+<option>Todas</option>
+<option>SP</option>
+<option>RJ</option>
+<option>MG</option>
+</select>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline mb-1 ml-1">Status</span>
+<select class="bg-surface-bright border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-primary/20 outline-none min-w-[120px]">
+<option>Todos</option>
+<option>Emitida</option>
+<option>Pendente</option>
+<option>Erro</option>
+</select>
+</div>
+</div>
+</div>
+</section>
+<!-- Dense List Content -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+<!-- Table Header (Desktop) -->
+<div class="hidden md:grid grid-cols-12 gap-gutter px-stack-lg py-stack-md bg-surface-container-low/50 border-b border-outline-variant/30 font-label-md text-outline uppercase tracking-wider">
+<div class="col-span-2">Data</div>
+<div class="col-span-4">Empresa / Razão Social</div>
+<div class="col-span-1 text-center">UF</div>
+<div class="col-span-2 text-right">Valor (R$)</div>
+<div class="col-span-2 text-center">Status</div>
+<div class="col-span-1"></div>
+</div>
+<!-- List Items -->
+<div class="divide-y divide-outline-variant/20" id="emission-list">
+<!-- Item 1: Emitida -->
+<div class="group">
+<div class="grid grid-cols-4 md:grid-cols-12 gap-gutter px-stack-lg py-stack-md items-center cursor-pointer hover:bg-surface-container-low/30 transition-colors" onclick="toggleExpand('item-1')">
+<div class="col-span-2 md:col-span-2 font-label-md text-label-md">14/05/2024</div>
+<div class="col-span-2 md:col-span-4 flex flex-col">
+<span class="font-body-md font-semibold text-on-surface truncate">Logística Express S.A.</span>
+<span class="text-label-sm text-outline font-label-sm hidden md:block">CNPJ: 12.345.678/0001-90</span>
+</div>
+<div class="hidden md:block col-span-1 text-center">
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-md font-label-md">SP</span>
+</div>
+<div class="hidden md:block col-span-2 text-right font-label-md text-label-md">1.250,45</div>
+<div class="col-span-2 md:col-span-2 flex justify-center">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full font-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                Emitida
+                            </span>
+</div>
+<div class="col-span-2 md:col-span-1 flex justify-end">
+<span class="material-symbols-outlined text-outline transition-transform duration-300" data-icon="expand_more" id="icon-item-1">expand_more</span>
+</div>
+</div>
+<!-- Expanded Detail -->
+<div class="row-collapsed bg-surface-container-low/20" id="detail-item-1">
+<div class="px-stack-lg py-stack-lg grid grid-cols-1 md:grid-cols-3 gap-stack-lg border-t border-outline-variant/10">
+<div class="space-y-stack-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-outline uppercase tracking-tighter">Número da Guia</span>
+<span class="font-label-md text-label-md text-on-surface">2024.000.982.112</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-outline uppercase tracking-tighter">Chave NF-e</span>
+<span class="font-label-md text-label-md text-on-surface break-all">35240512345678000190550010001234561001234567</span>
+</div>
+</div>
+<div class="flex flex-col gap-stack-sm justify-center">
+<div class="p-3 bg-white rounded-lg border border-outline-variant/20 shadow-sm flex items-center justify-between">
+<span class="text-body-sm text-on-surface-variant">Vencimento</span>
+<span class="font-label-md">17/05/2024</span>
+</div>
+<div class="p-3 bg-white rounded-lg border border-outline-variant/20 shadow-sm flex items-center justify-between">
+<span class="text-body-sm text-on-surface-variant">Código Receita</span>
+<span class="font-label-md">10009-9</span>
+</div>
+</div>
+<div class="flex flex-col justify-center gap-stack-md md:pl-stack-lg">
+<button class="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+                                    Download PDF
+                                </button>
+<div class="grid grid-cols-2 gap-stack-sm">
+<button class="flex items-center justify-center gap-2 px-3 py-2 border border-outline-variant text-on-surface rounded-lg font-label-md hover:bg-white transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span>
+                                        Visualizar
+                                    </button>
+<button class="flex items-center justify-center gap-2 px-3 py-2 border border-outline-variant text-on-surface rounded-lg font-label-md hover:bg-white transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+                                        Reemitir
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 2: Pendente -->
+<div class="group">
+<div class="grid grid-cols-4 md:grid-cols-12 gap-gutter px-stack-lg py-stack-md items-center cursor-pointer hover:bg-surface-container-low/30 transition-colors" onclick="toggleExpand('item-2')">
+<div class="col-span-2 md:col-span-2 font-label-md text-label-md">13/05/2024</div>
+<div class="col-span-2 md:col-span-4 flex flex-col">
+<span class="font-body-md font-semibold text-on-surface truncate">Varejo Global Ltda</span>
+<span class="text-label-sm text-outline font-label-sm hidden md:block">CNPJ: 98.765.432/0001-11</span>
+</div>
+<div class="hidden md:block col-span-1 text-center">
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-md font-label-md">MG</span>
+</div>
+<div class="hidden md:block col-span-2 text-right font-label-md text-label-md">842,00</div>
+<div class="col-span-2 md:col-span-2 flex justify-center">
+<span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                Pendente
+                            </span>
+</div>
+<div class="col-span-2 md:col-span-1 flex justify-end">
+<span class="material-symbols-outlined text-outline transition-transform duration-300" data-icon="expand_more" id="icon-item-2">expand_more</span>
+</div>
+</div>
+<div class="row-collapsed bg-surface-container-low/20" id="detail-item-2">
+<div class="px-stack-lg py-stack-lg text-center">
+<p class="text-body-sm text-on-surface-variant mb-stack-md">Aguardando processamento pela SEFAZ. Esta operação pode levar alguns minutos.</p>
+<div class="flex justify-center gap-stack-md">
+<button class="px-4 py-2 border border-outline-variant text-on-surface rounded-lg font-label-md hover:bg-white flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+                                    Atualizar Status
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 3: Erro -->
+<div class="group">
+<div class="grid grid-cols-4 md:grid-cols-12 gap-gutter px-stack-lg py-stack-md items-center cursor-pointer hover:bg-surface-container-low/30 transition-colors" onclick="toggleExpand('item-3')">
+<div class="col-span-2 md:col-span-2 font-label-md text-label-md">12/05/2024</div>
+<div class="col-span-2 md:col-span-4 flex flex-col">
+<span class="font-body-md font-semibold text-on-surface truncate">Tech Solutions Me</span>
+<span class="text-label-sm text-outline font-label-sm hidden md:block">CNPJ: 45.678.123/0001-44</span>
+</div>
+<div class="hidden md:block col-span-1 text-center">
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-md font-label-md">RJ</span>
+</div>
+<div class="hidden md:block col-span-2 text-right font-label-md text-label-md">3.400,90</div>
+<div class="col-span-2 md:col-span-2 flex justify-center">
+<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full font-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                Erro
+                            </span>
+</div>
+<div class="col-span-2 md:col-span-1 flex justify-end">
+<span class="material-symbols-outlined text-outline transition-transform duration-300" data-icon="expand_more" id="icon-item-3">expand_more</span>
+</div>
+</div>
+<div class="row-collapsed bg-red-50/30" id="detail-item-3">
+<div class="px-stack-lg py-stack-lg border-t border-red-100/30">
+<div class="flex items-start gap-stack-md bg-white p-4 rounded-lg border border-red-200">
+<span class="material-symbols-outlined text-red-600" data-icon="error_outline">error_outline</span>
+<div>
+<h4 class="font-semibold text-on-surface text-body-sm">Falha na Comunicação com SEFAZ</h4>
+<p class="text-body-sm text-on-surface-variant mt-1">O certificado digital da empresa expirou ou é inválido. Por favor, verifique as configurações da empresa e tente novamente.</p>
+<button class="mt-stack-md flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+                                        Ajustar Configurações
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 4: Emitida -->
+<div class="group">
+<div class="grid grid-cols-4 md:grid-cols-12 gap-gutter px-stack-lg py-stack-md items-center cursor-pointer hover:bg-surface-container-low/30 transition-colors" onclick="toggleExpand('item-4')">
+<div class="col-span-2 md:col-span-2 font-label-md text-label-md">12/05/2024</div>
+<div class="col-span-2 md:col-span-4 flex flex-col">
+<span class="font-body-md font-semibold text-on-surface truncate">Distribuidora Alvorada</span>
+<span class="text-label-sm text-outline font-label-sm hidden md:block">CNPJ: 55.444.333/0001-22</span>
+</div>
+<div class="hidden md:block col-span-1 text-center">
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-md font-label-md">PR</span>
+</div>
+<div class="hidden md:block col-span-2 text-right font-label-md text-label-md">425,10</div>
+<div class="col-span-2 md:col-span-2 flex justify-center">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full font-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                Emitida
+                            </span>
+</div>
+<div class="col-span-2 md:col-span-1 flex justify-end">
+<span class="material-symbols-outlined text-outline transition-transform duration-300" data-icon="expand_more" id="icon-item-4">expand_more</span>
+</div>
+</div>
+<div class="row-collapsed bg-surface-container-low/20" id="detail-item-4">
+<!-- Placeholder Content -->
+<div class="px-stack-lg py-stack-lg border-t border-outline-variant/10 text-center text-outline italic">
+                            Carregando detalhes...
+                        </div>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="px-stack-lg py-stack-md bg-surface-container-low/30 border-t border-outline-variant/30 flex flex-col md:flex-row justify-between items-center gap-stack-md">
+<span class="text-label-sm text-outline">Mostrando 4 de 1.250 emissões</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-on-primary font-label-md">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-low font-label-md">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-low font-label-md">3</button>
+<span class="px-2 text-outline">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-low font-label-md">48</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Shell (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 glass-header border-t border-outline-variant/30 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+<div class="flex justify-around items-center h-16 w-full px-4 pb-safe">
+<button class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[24px]" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Início</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary bg-primary-container/10 rounded-xl px-3 py-1">
+<span class="material-symbols-outlined text-[24px]" data-icon="history">history</span>
+<span class="font-label-sm text-label-sm">Histórico</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[24px]" data-icon="cloud_upload">cloud_upload</span>
+<span class="font-label-sm text-label-sm">Upload</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[24px]" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm">Ajustes</span>
+</button>
+</div>
+</nav>
+<script>
+        function toggleExpand(id) {
+            const detail = document.getElementById('detail-' + id);
+            const icon = document.getElementById('icon-' + id);
+            
+            if (detail.classList.contains('row-collapsed')) {
+                // Close others if desired - skipping for UX fluidity in history
+                detail.classList.remove('row-collapsed');
+                detail.classList.add('row-expanded');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                detail.classList.remove('row-expanded');
+                detail.classList.add('row-collapsed');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Search Bar Micro-interaction
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/10');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/10');
+        });
+    </script>
+</body></html>

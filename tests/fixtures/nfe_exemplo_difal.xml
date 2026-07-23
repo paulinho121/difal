@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35260712345678000199550010000123451123456780" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <natOp>VENDA INTERESTADUAL CONSUMIDOR FINAL</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>12345</nNF>
+        <dhEmi>2026-07-20T10:30:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <idDest>2</idDest>
+        <cMunFG>3550308</cMunFG>
+      </ide>
+      <emit>
+        <CNPJ>12345678000199</CNPJ>
+        <xNome>LOGISTICA AVANCADA BRASIL LTDA</xNome>
+        <enderEmit>
+          <xLgr>Rua das Industrias</xLgr>
+          <nro>100</nro>
+          <xBairro>Centro</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <UF>SP</UF>
+          <CEP>01000000</CEP>
+        </enderEmit>
+      </emit>
+      <dest>
+        <CPF>12345678909</CPF>
+        <xNome>CONSUMIDOR FINAL EXEMPLO</xNome>
+        <enderDest>
+          <xLgr>Av. Afonso Pena</xLgr>
+          <nro>500</nro>
+          <xBairro>Centro</xBairro>
+          <cMun>3106200</cMun>
+          <xMun>Belo Horizonte</xMun>
+          <UF>MG</UF>
+          <CEP>30130000</CEP>
+        </enderDest>
+        <indIEDest>9</indIEDest>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>001</cProd>
+          <NCM>61091000</NCM>
+          <CFOP>6108</CFOP>
+          <xProd>Camiseta de algodao</xProd>
+          <uCom>UN</uCom>
+          <qCom>10.0000</qCom>
+          <vUnCom>100.00</vUnCom>
+          <vProd>1000.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <modBC>3</modBC>
+              <vBC>1000.00</vBC>
+              <pICMS>12.00</pICMS>
+              <vICMS>120.00</vICMS>
+            </ICMS00>
+            <ICMSUFDest>
+              <vBCUFDest>1000.00</vBCUFDest>
+              <vBCFCPUFDest>1000.00</vBCFCPUFDest>
+              <pFCPUFDest>2.00</pFCPUFDest>
+              <pICMSUFDest>18.00</pICMSUFDest>
+              <pICMSInter>12.00</pICMSInter>
+              <pICMSInterPart>100.00</pICMSInterPart>
+              <vFCPUFDest>20.00</vFCPUFDest>
+              <vICMSUFDest>60.00</vICMSUFDest>
+              <vICMSUFRemet>0.00</vICMSUFRemet>
+            </ICMSUFDest>
+          </ICMS>
+        </imposto>
+      </det>
+      <total>
+        <ICMSTot>
+          <vBC>1000.00</vBC>
+          <vICMS>120.00</vICMS>
+          <vFCPUFDest>20.00</vFCPUFDest>
+          <vICMSUFDest>60.00</vICMSUFDest>
+          <vProd>1000.00</vProd>
+          <vNF>1000.00</vNF>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <tpAmb>1</tpAmb>
+      <verAplic>SP_NFE_PL_009</verAplic>
+      <chNFe>35260712345678000199550010000123451123456780</chNFe>
+      <dhRecbto>2026-07-20T10:31:00-03:00</dhRecbto>
+      <nProt>135260000012345</nProt>
+      <digVal>ZmFrZS1kaWdlc3Q=</digVal>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>

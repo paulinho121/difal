@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+        .float-animation {
+            animation: float 4s ease-in-out infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#131b2e",
+                      "surface-container-low": "#f2f3ff",
+                      "on-surface": "#131b2e",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#54647a",
+                      "on-tertiary-fixed-variant": "#444749",
+                      "on-tertiary-container": "#e2e4e6",
+                      "surface-bright": "#faf8ff",
+                      "outline": "#737688",
+                      "inverse-on-surface": "#eef0ff",
+                      "secondary-fixed": "#d3e4fe",
+                      "background": "#faf8ff",
+                      "surface-container": "#eaedff",
+                      "inverse-primary": "#b7c4ff",
+                      "on-primary-fixed": "#001452",
+                      "surface-tint": "#004ced",
+                      "on-primary": "#ffffff",
+                      "secondary": "#505f76",
+                      "primary": "#003ec7",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "on-primary-fixed-variant": "#0038b6",
+                      "tertiary-fixed": "#e0e3e5",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "on-secondary": "#ffffff",
+                      "surface-container-high": "#e2e7ff",
+                      "primary-fixed-dim": "#b7c4ff",
+                      "outline-variant": "#c3c5d9",
+                      "surface-dim": "#d2d9f4",
+                      "surface": "#faf8ff",
+                      "surface-container-highest": "#dae2fd",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#4b4e50",
+                      "error-container": "#ffdad6",
+                      "tertiary-fixed-dim": "#c4c7c9",
+                      "primary-container": "#0052ff",
+                      "inverse-surface": "#283044",
+                      "on-primary-container": "#dfe3ff",
+                      "on-tertiary-fixed": "#191c1e",
+                      "on-secondary-fixed": "#0b1c30",
+                      "secondary-container": "#d0e1fb",
+                      "on-error": "#ffffff",
+                      "on-surface-variant": "#434656",
+                      "tertiary-container": "#636668",
+                      "surface-variant": "#dae2fd",
+                      "error": "#ba1a1a",
+                      "primary-fixed": "#dde1ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "container-max": "1440px",
+                      "stack-xl": "48px",
+                      "unit": "4px",
+                      "stack-xs": "4px",
+                      "margin-desktop": "32px",
+                      "margin-mobile": "16px",
+                      "stack-sm": "8px",
+                      "stack-md": "16px",
+                      "stack-lg": "24px"
+              },
+              "fontFamily": {
+                      "label-md": ["JetBrains Mono"],
+                      "headline-lg": ["Inter"],
+                      "label-sm": ["JetBrains Mono"],
+                      "body-lg": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "label-md": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-24">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full backdrop-blur-md z-50 bg-surface-container-lowest/80 border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-stack-sm w-full max-w-container-max mx-auto">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">GNRE.Flow</h1>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-primary-container/20 flex items-center justify-center border border-primary/10 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A clean professional studio headshot of a business executive in a modern office environment. The lighting is soft and high-key, matching the light-mode UI. The background is a blurred minimalist corporate setting with soft blue and white tones. The person has a friendly, professional expression, conveying trust and efficiency in a high-stakes fiscal SaaS context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAk0YBWHlOBpJ9pdqpvcaPfstzxUgTcHgI-qyMldomsTSExIFS83xkbZOFRRO88wMdXuULK5vOyWt5_3vkqyj_5xvwUM9jokRDO5-nMFdGnbJeQpq7_Z_BBc8uvYLrpcX9mTWtaea4DSKbRXj8fT0yfgLIm9aB3ylQLkuTqtpjnjfksHKVqpNNl98cHRJPhxADMTkZfB6Vn8Ce0a2Fzhio1_9KseqpjGduH-Ks-e29MSl0bHwqxZsc3-g"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto w-full">
+<!-- Welcome Header -->
+<header class="mb-stack-xl">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Dashboard Fiscal</h2>
+<p class="font-body-md text-body-md text-on-secondary-container">Visão geral das suas operações de GNRE hoje.</p>
+</header>
+<!-- Resumo / Bento Grid Cards -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-stack-lg mb-stack-xl">
+<!-- Card: XMLs Enviados -->
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-stack-md">
+<span class="material-symbols-outlined text-primary" data-icon="cloud_upload">cloud_upload</span>
+<span class="text-xs font-label-sm px-2 py-1 bg-primary-container/10 text-primary rounded-full">+12% hoje</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">XMLs enviados</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface">1,248</div>
+</div>
+<!-- Card: Guias Emitidas -->
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-stack-md">
+<span class="material-symbols-outlined text-tertiary" data-icon="description">description</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Guias emitidas</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface">982</div>
+</div>
+<!-- Card: Guias Pendentes -->
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm hover:shadow-md transition-all border-l-4 border-l-error/40">
+<div class="flex items-center justify-between mb-stack-md">
+<span class="material-symbols-outlined text-error" data-icon="pending_actions">pending_actions</span>
+<span class="text-xs font-label-sm px-2 py-1 bg-error-container/20 text-error rounded-full">Atenção</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Guias pendentes</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface">14</div>
+</div>
+<!-- Card: Economia de tempo -->
+<div class="bg-primary text-on-primary p-stack-lg rounded-xl shadow-lg hover:translate-y-[-2px] transition-all overflow-hidden relative">
+<div class="absolute -right-4 -top-4 opacity-20">
+<span class="material-symbols-outlined text-[120px]" data-icon="bolt">bolt</span>
+</div>
+<div class="relative z-10">
+<div class="flex items-center mb-stack-md">
+<span class="material-symbols-outlined mr-2" data-icon="schedule">schedule</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-primary/80 mb-1">Economia de tempo</div>
+<div class="font-headline-md text-headline-md font-bold">6.4h</div>
+<div class="text-[10px] mt-2 bg-on-primary/10 w-fit px-2 py-0.5 rounded">Nas últimas 24h</div>
+</div>
+</div>
+</section>
+<!-- Middle Section: Chart & History -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-stack-lg">
+<!-- Emissões por dia (Simple Chart) -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm">
+<div class="flex justify-between items-center mb-stack-lg">
+<h3 class="font-headline-md text-headline-md text-[18px]">Emissões por dia</h3>
+<div class="flex gap-2">
+<button class="text-xs font-label-md px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant">7 dias</button>
+<button class="text-xs font-label-md px-3 py-1 rounded-full text-on-surface-variant/60">30 dias</button>
+</div>
+</div>
+<div class="h-64 flex items-end justify-between gap-2 px-2">
+<!-- Simple CSS bar chart visualization -->
+<div class="flex-1 bg-primary/10 hover:bg-primary/30 transition-colors rounded-t-lg relative group" style="height: 45%;">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">245 guias</div>
+</div>
+<div class="flex-1 bg-primary/10 hover:bg-primary/30 transition-colors rounded-t-lg relative group" style="height: 60%;">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">310 guias</div>
+</div>
+<div class="flex-1 bg-primary/10 hover:bg-primary/30 transition-colors rounded-t-lg relative group" style="height: 35%;">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">190 guias</div>
+</div>
+<div class="flex-1 bg-primary/10 hover:bg-primary/30 transition-colors rounded-t-lg relative group" style="height: 85%;">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">420 guias</div>
+</div>
+<div class="flex-1 bg-primary/10 hover:bg-primary/30 transition-colors rounded-t-lg relative group" style="height: 70%;">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">350 guias</div>
+</div>
+<div class="flex-1 bg-primary/10 hover:bg-primary/30 transition-colors rounded-t-lg relative group" style="height: 55%;">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">280 guias</div>
+</div>
+<div class="flex-1 bg-primary rounded-t-lg relative group" style="height: 95%;">
+<div class="opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">Hoje: 482</div>
+</div>
+</div>
+<div class="flex justify-between mt-stack-md px-2 text-[10px] font-label-md text-on-surface-variant/40">
+<span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span class="text-primary font-bold">HOJE</span>
+</div>
+</div>
+<!-- Histórico Recente -->
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/20 shadow-sm flex flex-col">
+<div class="flex justify-between items-center mb-stack-lg">
+<h3 class="font-headline-md text-headline-md text-[18px]">Histórico recente</h3>
+<button class="text-primary text-xs font-label-md hover:underline">Ver tudo</button>
+</div>
+<div class="space-y-stack-md flex-1">
+<!-- Item 1 -->
+<div class="p-stack-md rounded-lg bg-surface-container-low/40 border border-outline-variant/10 flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-lg bg-on-primary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="text-sm font-semibold truncate">Tech Global LTDA</div>
+<div class="text-[11px] font-label-md text-on-surface-variant">SP • R$ 1.450,22</div>
+</div>
+<div class="text-[10px] font-label-sm bg-surface-bright text-on-surface-variant px-2 py-0.5 rounded border border-outline-variant/20">Sucesso</div>
+</div>
+<!-- Item 2 -->
+<div class="p-stack-md rounded-lg bg-surface-container-low/40 border border-outline-variant/10 flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-lg bg-on-primary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="text-sm font-semibold truncate">Varejo Norte S.A.</div>
+<div class="text-[11px] font-label-md text-on-surface-variant">AM • R$ 890,00</div>
+</div>
+<div class="text-[10px] font-label-sm bg-surface-bright text-on-surface-variant px-2 py-0.5 rounded border border-outline-variant/20">Sucesso</div>
+</div>
+<!-- Item 3 -->
+<div class="p-stack-md rounded-lg bg-surface-container-low/40 border border-outline-variant/10 flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-lg bg-on-primary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="text-sm font-semibold truncate">Indústria Sul Eireli</div>
+<div class="text-[11px] font-label-md text-on-surface-variant">RS • R$ 4.215,90</div>
+</div>
+<div class="text-[10px] font-label-sm bg-surface-bright text-on-surface-variant px-2 py-0.5 rounded border border-outline-variant/20">Sucesso</div>
+</div>
+</div>
+<div class="mt-stack-lg pt-stack-md border-t border-outline-variant/20">
+<div class="flex items-center gap-stack-sm text-on-surface-variant/60">
+<span class="material-symbols-outlined text-[16px]" data-icon="sync">sync</span>
+<span class="text-[11px] font-label-md">Sincronizado há 2 min</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Nova Emissão Floating Highlight -->
+<div class="mt-stack-xl p-stack-xl bg-surface-container rounded-2xl border border-primary/10 overflow-hidden relative group">
+
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-stack-lg">
+<div class="text-center md:text-left">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Pronto para novas emissões?</h3>
+<p class="font-body-sm text-body-sm text-on-secondary-container max-w-md">Envie seus arquivos XML agora e deixe o GNRE.Flow processar tudo automaticamente com segurança e rapidez.</p>
+</div>
+<button class="bg-primary text-on-primary px-stack-lg py-stack-md rounded-xl font-semibold flex items-center gap-stack-sm shadow-lg active:scale-95 transition-all float-animation">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                    Nova Emissão
+                </button>
+</div>
+</div>
+</main>
+<!-- FAB for mobile (Visible only on mobile potentially, but requested as 'Destaque' or FAB) -->
+<button class="fixed bottom-24 right-margin-mobile md:hidden w-14 h-14 bg-primary text-on-primary rounded-full shadow-xl flex items-center justify-center z-40 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[32px]" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 backdrop-blur-lg bg-surface-container-lowest/90 border-t border-outline-variant/30 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+<div class="flex justify-around items-center h-16 w-full px-4 pb-safe max-w-container-max mx-auto">
+<!-- Dashboard Active -->
+<a class="flex flex-col items-center justify-center text-primary bg-primary-container/10 rounded-xl px-3 py-1 scale-90 duration-200" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="cloud_upload">cloud_upload</span>
+<span class="font-label-sm text-label-sm">Upload</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="history">history</span>
+<span class="font-label-sm text-label-sm">Histórico</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm">Ajustes</span>
+</a>
+</div>
+</nav>
+<script>
+        // Micro-interactions and simple state handling
+        document.querySelectorAll('a, button').forEach(el => {
+            el.addEventListener('click', (e) => {
+                // Prevent default if it's a dummy link
+                if (el.getAttribute('href') === '#') e.preventDefault();
+                
+                // Add a little feedback effect
+                el.classList.add('opacity-70');
+                setTimeout(() => el.classList.remove('opacity-70'), 150);
+            });
+        });
+
+        // Dynamic time indicator for "Economia de tempo"
+        const hoursElement = document.querySelector('.lg\\:grid-cols-4 > div:last-child .text-headline-md');
+        if (hoursElement) {
+            let currentHours = 6.4;
+            setInterval(() => {
+                // Mimic real-time updates subtly
+                currentHours += (Math.random() * 0.01);
+                hoursElement.textContent = currentHours.toFixed(1) + 'h';
+            }, 30000);
+        }
+    </script>
+</body></html>

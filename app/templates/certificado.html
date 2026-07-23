@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GNRE.Flow - Certificado Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = { darkMode: "class", theme: { extend: {
+            "colors": {"on-background":"#131b2e","surface-container-low":"#f2f3ff","on-surface":"#131b2e","on-secondary-container":"#54647a","surface-bright":"#faf8ff","outline":"#737688","background":"#faf8ff","surface-container":"#eaedff","on-primary":"#ffffff","secondary":"#505f76","primary":"#003ec7","outline-variant":"#c3c5d9","surface":"#faf8ff","surface-container-lowest":"#ffffff","primary-container":"#0052ff","on-primary-container":"#dfe3ff","secondary-container":"#d0e1fb","on-secondary-fixed-variant":"#38485d","error-container":"#ffdad6","error":"#ba1a1a"},
+            "borderRadius": {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+            "spacing": {"gutter":"24px","container-max":"1440px","stack-xl":"48px","margin-desktop":"32px","margin-mobile":"16px","stack-sm":"8px","stack-md":"16px","stack-lg":"24px"},
+            "fontFamily": {"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-md":["Inter"],"body-md":["Inter"],"display-lg":["Inter"],"headline-sm":["Inter"]},
+            "fontSize": {"label-md":["13px",{"lineHeight":"16px","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","fontWeight":"500"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}
+      }}}
+    </script>
+<style>
+        body { background-color: #faf8ff; color: #131b2e; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden pb-24">
+<header class="fixed top-0 w-full backdrop-blur-md z-50 bg-surface-container-lowest/80 border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-stack-sm w-full max-w-container-max mx-auto">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">GNRE.Flow</h1>
+</div>
+</div>
+</header>
+<main class="pt-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto space-y-stack-xl">
+<div class="flex flex-col gap-2">
+<h2 class="font-display-lg text-display-lg text-on-background">Certificado Digital</h2>
+<p class="text-on-secondary-container max-w-2xl">Gerencie a identidade digital da sua empresa para automação de guias GNRE.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+<div class="col-span-1 md:col-span-2 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-stack-lg shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-stack-md" id="statusCard">
+<p class="text-on-surface-variant">Carregando status do certificado…</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-stack-lg shadow-sm">
+<div class="flex items-center gap-2 mb-stack-lg border-b border-outline-variant/10 pb-4">
+<span class="material-symbols-outlined text-primary">info</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Dados da Empresa</h4>
+</div>
+<div class="space-y-4" id="dadosEmpresa">
+<p class="text-on-surface-variant text-sm">Faça upload do certificado para preencher automaticamente.</p>
+</div>
+<button class="w-full mt-4 py-3 rounded-xl border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 active:scale-95 transition-all flex items-center justify-center gap-2" id="btnTestar">
+<span class="material-symbols-outlined">verified</span> Testar Certificado
+</button>
+<p class="text-xs mt-2 text-on-secondary-container" id="resultadoTeste"></p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-stack-lg shadow-sm flex flex-col">
+<div class="flex items-center gap-2 mb-stack-lg border-b border-outline-variant/10 pb-4">
+<span class="material-symbols-outlined text-primary">cloud_upload</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Enviar Certificado (.pfx / .p12)</h4>
+</div>
+<form class="flex-grow flex flex-col gap-stack-md" id="formCertificado">
+<div class="relative group cursor-pointer border-2 border-dashed border-outline-variant/40 rounded-xl p-stack-lg flex flex-col items-center justify-center hover:border-primary/50 transition-all" onclick="document.getElementById('file-upload').click()">
+<input accept=".pfx,.p12" class="hidden" id="file-upload" name="arquivo" type="file"/>
+<div class="w-12 h-12 bg-surface-container-low rounded-full flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-primary">upload_file</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface" id="nomeArquivo">Clique para selecionar arquivo .pfx / .p12</p>
+</div>
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-secondary-container block" for="pfx-password">Senha do Certificado</label>
+<input class="w-full h-12 px-stack-md rounded-lg border border-outline-variant/50 outline-none font-label-md" id="pfx-password" name="senha" placeholder="••••••••" type="password"/>
+</div>
+<div class="mt-auto pt-4">
+<button class="w-full py-3 bg-primary text-white rounded-xl font-label-md text-label-md shadow-lg active:scale-[0.98] transition-all" type="submit">
+                                Salvar Certificado
+                            </button>
+</div>
+<p class="text-xs" id="mensagemUpload"></p>
+</form>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded-xl p-stack-md flex items-start gap-4">
+<span class="material-symbols-outlined text-primary text-[20px] mt-1">enhanced_encryption</span>
+<div>
+<p class="text-on-secondary-fixed-variant font-label-md text-label-md mb-1">Aviso de Segurança</p>
+<p class="text-on-secondary-container text-body-sm">O arquivo e a senha do certificado são criptografados (Fernet/AES) antes de serem gravados no banco local — nunca em texto puro.</p>
+</div>
+</div>
+</main>
+<script>
+        function renderStatus(data) {
+            const card = document.getElementById('statusCard');
+            const dados = document.getElementById('dadosEmpresa');
+            if (!data.configurado) {
+                card.innerHTML = `<div class="flex items-center gap-stack-lg">
+                    <div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-surface-variant">error_outline</span>
+                    </div>
+                    <div><p class="font-label-sm text-label-sm text-on-secondary-container uppercase">Status</p><h3 class="font-headline-md text-headline-md">Nenhum certificado cadastrado</h3></div>
+                </div>`;
+                return;
+            }
+            const valido = data.status === 'valido';
+            card.innerHTML = `<div class="flex items-center gap-stack-lg">
+                <div class="w-12 h-12 rounded-full ${valido ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center">
+                    <span class="material-symbols-outlined ${valido ? 'text-green-700' : 'text-red-700'}">${valido ? 'check_circle' : 'error'}</span>
+                </div>
+                <div>
+                    <p class="font-label-sm text-label-sm text-on-secondary-container uppercase">Status do Certificado</p>
+                    <h3 class="font-headline-md text-headline-md ${valido ? 'text-green-700' : 'text-red-700'}">${valido ? 'Válido até ' + data.valido_ate : 'Expirado em ' + data.valido_ate}</h3>
+                </div>
+            </div>`;
+            dados.innerHTML = `
+                <div><label class="font-label-sm text-label-sm text-on-secondary-container block mb-1">Razão Social</label><p class="font-body-md font-semibold">${data.empresa.razao_social}</p></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="font-label-sm text-label-sm text-on-secondary-container block mb-1">CNPJ</label><p class="font-label-md">${data.empresa.cnpj}</p></div>
+                    <div><label class="font-label-sm text-label-sm text-on-secondary-container block mb-1">Validade</label><p class="font-label-md">${data.valido_ate}</p></div>
+                </div>`;
+        }
+
+        async function carregarStatus() {
+            const data = await fetch('/api/certificado').then(r => r.json());
+            renderStatus(data);
+        }
+
+        document.getElementById('file-upload').addEventListener('change', (e) => {
+            const nome = e.target.files[0]?.name;
+            if (nome) document.getElementById('nomeArquivo').textContent = nome;
+        });
+
+        document.getElementById('formCertificado').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('mensagemUpload');
+            const formData = new FormData(e.target);
+            msg.textContent = 'Enviando...';
+            msg.className = 'text-xs text-on-secondary-container';
+            const resp = await fetch('/api/certificado', { method: 'POST', body: formData });
+            const data = await resp.json();
+            if (resp.ok) {
+                msg.textContent = 'Certificado salvo com sucesso.';
+                msg.className = 'text-xs text-green-700';
+                renderStatus(data);
+            } else {
+                msg.textContent = data.detail || 'Falha ao salvar certificado.';
+                msg.className = 'text-xs text-error';
+            }
+        });
+
+        document.getElementById('btnTestar').addEventListener('click', async () => {
+            const resultado = document.getElementById('resultadoTeste');
+            resultado.textContent = 'Testando conexão mTLS com a GNRE...';
+            const data = await fetch('/api/certificado/testar', { method: 'POST' }).then(r => r.json());
+            if (data.ok) {
+                resultado.textContent = 'Conexão OK — certificado autenticou com sucesso no WebService GnreConfigUF.';
+                resultado.className = 'text-xs mt-2 text-green-700';
+            } else {
+                resultado.textContent = 'Falha: ' + (data.erro || 'erro desconhecido');
+                resultado.className = 'text-xs mt-2 text-error';
+            }
+        });
+
+        carregarStatus();
+    </script>
+</body></html>
