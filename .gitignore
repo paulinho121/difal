@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+app/data/*.db
+app/data/secret.key
+.pytest_cache/
+.vercel/

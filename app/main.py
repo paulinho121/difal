@@ -1,7 +1,7 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import init_db
@@ -9,21 +9,21 @@ from app.routers import certificado, dashboard, guias, xml_upload
 
 APP_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="GNRE.Flow - Automacao de DIFAL")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="GNRE.Flow - Automacao de DIFAL", lifespan=lifespan)
 
 app.include_router(dashboard.router)
 app.include_router(xml_upload.router)
 app.include_router(guias.router)
 app.include_router(certificado.router)
 
-app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
-
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
-
-
-@app.on_event("startup")
-def on_startup():
-    init_db()
 
 
 @app.get("/")

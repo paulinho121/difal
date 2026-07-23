@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import func
+from sqlalchemy import Date, cast, func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,7 +26,7 @@ def dashboard_stats(db: Session = Depends(get_db)):
     guias_erro = db.query(func.count(Guia.id)).filter(Guia.status == "erro").scalar() or 0
 
     emissoes_por_dia = (
-        db.query(func.date(Guia.criado_em).label("dia"), func.count(Guia.id))
+        db.query(cast(Guia.criado_em, Date).label("dia"), func.count(Guia.id))
         .filter(Guia.status == "emitida")
         .group_by("dia")
         .order_by("dia")

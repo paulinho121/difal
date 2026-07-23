@@ -13,7 +13,20 @@ DATA_DIR.mkdir(exist_ok=True)
 
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'gnre_flow.db'}")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Neon/Vercel Postgres as vezes entregam o schema curto "postgres://", que o
+# SQLAlchemy nao reconhece -- normaliza para "postgresql://".
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+_is_sqlite = DATABASE_URL.startswith("sqlite")
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    # Neon suspende o compute quando ocioso e derruba conexoes; pre_ping evita
+    # erros intermitentes de "conexao fechada" reciclando conexoes mortas.
+    pool_pre_ping=not _is_sqlite,
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
