@@ -172,11 +172,23 @@
             }
         };
 
-        window.confirmar = async (id) => { await fetch(`/api/guias/${id}/confirmar`, { method: 'POST' }); carregarLista(); };
-        window.atualizarStatus = async (id) => { await fetch(`/api/guias/${id}/atualizar-status`, { method: 'POST' }); carregarLista(); };
-        window.reemitir = async (id) => { await fetch(`/api/guias/${id}/reemitir`, { method: 'POST' }); carregarLista(); };
+        async function chamarAcao(url, id) {
+            const resp = await fetch(url, { method: 'POST' });
+            let data = null;
+            try { data = await resp.json(); } catch (e) { /* corpo vazio ou nao-JSON */ }
+            if (!resp.ok) {
+                alert('Falhou: ' + (data && data.detail ? data.detail : `erro ${resp.status}`));
+            } else if (data && data.mensagem_erro) {
+                alert(data.mensagem_erro);
+            }
+            await carregarLista(id);
+        }
 
-        async function carregarLista() {
+        window.confirmar = (id) => chamarAcao(`/api/guias/${id}/confirmar`, id);
+        window.atualizarStatus = (id) => chamarAcao(`/api/guias/${id}/atualizar-status`, id);
+        window.reemitir = (id) => chamarAcao(`/api/guias/${id}/reemitir`, id);
+
+        async function carregarLista(expandirId) {
             const params = new URLSearchParams();
             if (filtroUf.value) params.set('uf', filtroUf.value);
             if (document.getElementById('filtroStatus').value) params.set('status', document.getElementById('filtroStatus').value);
@@ -188,6 +200,9 @@
                 container.innerHTML = '<div class="p-stack-lg text-center text-on-surface-variant/50">Nenhuma guia encontrada.</div>';
             } else {
                 container.innerHTML = data.guias.map(renderGuia).join('');
+            }
+            if (expandirId) {
+                toggleExpand(expandirId);
             }
         }
 
