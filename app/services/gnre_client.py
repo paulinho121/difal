@@ -73,6 +73,7 @@ SITUACAO_GUIA_ERRO_COMUNICACAO = "3"
 class ResultadoEnvioLote:
     protocolo: str | None
     resposta_bruta: str
+    mensagem_rejeicao: str | None = None
 
 
 @dataclass
@@ -189,7 +190,29 @@ def enviar_lote(xml_lote: bytes, cert_pem: bytes, key_pem: bytes) -> ResultadoEn
         elemento_xml = etree.fromstring(xml_lote)
         resposta = _chamar_operacao(operacao, elemento_xml)
         resposta_texto = _resposta_para_texto(resposta)
-        return ResultadoEnvioLote(protocolo=_extrair_numero_recibo(resposta_texto), resposta_bruta=resposta_texto)
+        return ResultadoEnvioLote(
+            protocolo=_extrair_numero_recibo(resposta_texto),
+            resposta_bruta=resposta_texto,
+            mensagem_rejeicao=_extrair_mensagem_rejeicao(resposta_texto),
+        )
+
+
+def _extrair_mensagem_rejeicao(resposta_texto: str) -> str | None:
+    """Estrutura confirmada com uma rejeicao real (TRetLote_GNRE):
+    situacaoRecepcao/codigo + situacaoRecepcao/descricao."""
+    try:
+        root = etree.fromstring(resposta_texto.encode("utf-8"))
+    except etree.XMLSyntaxError:
+        return None
+    situacao = root.xpath(".//*[local-name()='situacaoRecepcao']")
+    if not situacao:
+        return None
+    codigo = situacao[0].xpath("./*[local-name()='codigo']")
+    descricao = situacao[0].xpath("./*[local-name()='descricao']")
+    if not descricao:
+        return None
+    codigo_txt = codigo[0].text if codigo else "?"
+    return f"GNRE rejeitou o lote (codigo {codigo_txt}): {descricao[0].text}"
 
 
 def _extrair_numero_recibo(resposta_texto: str) -> str | None:

@@ -130,15 +130,23 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
         xml_lote = gnre_xml_builder.montar_lote_xml(empresa_builder, [guia_builder])
         resultado = gnre_client.enviar_lote(xml_lote, cert_pem, key_pem)
 
-        guia.status = "enviada"
-        guia.protocolo_lote = resultado.protocolo
         if resultado.protocolo:
+            guia.status = "enviada"
+            guia.protocolo_lote = resultado.protocolo
             guia.mensagem_erro = None
+        elif resultado.mensagem_rejeicao:
+            # GNRE respondeu e recusou o lote (ex.: CNPJ do certificado nao
+            # habilitado para o servico) -- nao foi aceito, entao "erro" (nao
+            # "enviada") e mais correto; da pra tentar de novo via Reemitir.
+            guia.status = "erro"
+            guia.mensagem_erro = resultado.mensagem_rejeicao
         else:
-            # O envio nao levantou excecao (o GNRE aceitou a chamada), mas nao
-            # conseguimos extrair o numeroRecibo da resposta -- guarda a
-            # resposta bruta em vez de descartar, senao fica impossivel
-            # diagnosticar o formato real sem acesso ao ambiente de producao.
+            # O envio nao levantou excecao e nao veio nem numeroRecibo nem
+            # mensagem de rejeicao reconhecida -- guarda a resposta bruta em
+            # vez de descartar, senao fica impossivel diagnosticar o formato
+            # real sem acesso ao ambiente de producao.
+            guia.status = "enviada"
+            guia.protocolo_lote = None
             guia.mensagem_erro = f"Enviado, mas sem numeroRecibo na resposta. Resposta bruta: {resultado.resposta_bruta[:1500]}"
     except Exception as exc:  # noqa: BLE001 -- superficie de erro fiscal, precisa chegar ate o usuario
         guia.status = "erro"
