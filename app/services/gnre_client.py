@@ -171,13 +171,24 @@ def _chamar_operacao(operacao, xml_elemento):
         raise
 
 
+def _resposta_para_texto(resposta) -> str:
+    """A resposta tambem e um xsd:any -- o zeep devolve um lxml.etree._Element
+    cru, nao uma string. str() nesse caso so retorna o repr do objeto Python
+    ("<Element {ns}Tag at 0x...>"), nao o XML serializado. Confirmado por um
+    envio real: a mensagem de erro mostrava exatamente esse repr no lugar do
+    XML esperado."""
+    if isinstance(resposta, etree._Element):
+        return etree.tostring(resposta, encoding="unicode")
+    return str(resposta)
+
+
 def enviar_lote(xml_lote: bytes, cert_pem: bytes, key_pem: bytes) -> ResultadoEnvioLote:
     with _arquivos_cert_temporarios(cert_pem, key_pem) as (cert_path, key_path):
         client = _client_mtls(GNRE_LOTE_RECEPCAO_URL, cert_path, key_path)
         operacao = _resolver_operacao(client, OPERACOES_ENVIO_CANDIDATAS)
         elemento_xml = etree.fromstring(xml_lote)
         resposta = _chamar_operacao(operacao, elemento_xml)
-        resposta_texto = str(resposta)
+        resposta_texto = _resposta_para_texto(resposta)
         return ResultadoEnvioLote(protocolo=_extrair_numero_recibo(resposta_texto), resposta_bruta=resposta_texto)
 
 
@@ -195,7 +206,7 @@ def consultar_resultado_lote(protocolo: str, cert_pem: bytes, key_pem: bytes) ->
         client = _client_mtls(GNRE_RESULTADO_LOTE_URL, cert_path, key_path)
         operacao = _resolver_operacao(client, OPERACOES_RESULTADO_CANDIDATAS)
         resposta = _chamar_operacao_protocolo(operacao, protocolo)
-        resposta_texto = str(resposta)
+        resposta_texto = _resposta_para_texto(resposta)
         return _parsear_resultado_lote(resposta_texto)
 
 
