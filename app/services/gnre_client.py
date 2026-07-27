@@ -108,9 +108,19 @@ def _arquivos_cert_temporarios(cert_pem: bytes, key_pem: bytes):
         os.unlink(key_file.name)
 
 
+# O certificado TLS do ambiente de homologacao (testegnre.pe.gov.br) nao bate
+# com o proprio hostname do servidor (erro real observado: "Hostname
+# mismatch, certificate is not valid for 'www.testegnre.pe.gov.br'") -- falha
+# de configuracao do lado da SEFAZ-PE, comum em ambientes de teste de
+# governo. So desativa a verificacao de certificado quando explicitamente
+# pedido via env var, nunca por padrao (producao continua verificando).
+_VERIFICAR_SSL = os.getenv("GNRE_VERIFY_SSL", "true").strip().lower() != "false"
+
+
 def _client_mtls(wsdl_url: str, cert_path: str, key_path: str) -> Client:
     session = requests.Session()
     session.cert = (cert_path, key_path)
+    session.verify = _VERIFICAR_SSL
     transport = Transport(session=session, timeout=30, operation_timeout=60)
     return Client(f"{wsdl_url}?wsdl", transport=transport)
 
