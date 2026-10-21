@@ -141,9 +141,20 @@ def _client_mtls(wsdl_url: str, cert_path: str, key_path: str, registro: list | 
     if registro is not None:
         # Registra metodo/URL/status de cada requisicao desta tentativa, pra
         # diagnosticar onde o 429 acontece (WSDL x envio) sem expor segredos.
-        session.hooks["response"].append(
-            lambda resp, *a, **k: registro.append(f"{resp.request.method} {resp.url} -> {resp.status_code}")
-        )
+        def _registrar(resp, *a, **k):
+            linha = f"{resp.request.method} {resp.url} -> {resp.status_code}"
+            if resp.status_code == 429:
+                # Cabecalhos de limite (Retry-After etc.) dizem quanto esperar.
+                uteis = {
+                    k2: v2
+                    for k2, v2 in resp.headers.items()
+                    if k2.lower() in ("retry-after", "date", "server", "x-ratelimit-limit", "x-ratelimit-remaining", "x-ratelimit-reset")
+                    or k2.lower().startswith("ratelimit")
+                }
+                linha += f" headers={uteis}"
+            registro.append(linha)
+
+        session.hooks["response"].append(_registrar)
     transport = Transport(session=session, cache=_CACHE_WSDL, timeout=30, operation_timeout=60)
     return Client(f"{wsdl_url}?wsdl", transport=transport)
 
