@@ -36,10 +36,10 @@ GNRE_CONFIG_UF_URL = os.getenv("GNRE_CONFIG_UF_URL", "https://www.gnre.pe.gov.br
 # como o nome real da operacao do GnreLoteRecepcao ao consultar o WSDL de
 # producao com um certificado real (listar_operacoes_disponiveis() via
 # /api/certificado/testar) -- os demais eram convencoes chutadas antes disso.
-# GnreResultadoLote nao foi confirmado ainda; mantido como suposicao pela
-# mesma convencao ate ser validado com uma consulta real.
+# GnreResultadoLote expoe "consultar" (confirmado), nao "processar".
 OPERACOES_ENVIO_CANDIDATAS = ["processar", "gnreRecepcaoLote", "GnreRecepcaoLote", "recepcaoLote", "RecepcaoLote"]
 OPERACOES_RESULTADO_CANDIDATAS = [
+    "consultar",  # confirmado em producao: unica operacao exposta pelo GnreResultadoLote
     "processar",
     "gnreResultadoLote",
     "GnreResultadoLote",
@@ -65,7 +65,7 @@ class OperacaoSoapNaoEncontradaError(GnreClientError):
         super().__init__(
             f"Nenhuma das operacoes esperadas ({', '.join(tentadas)}) foi encontrada no WSDL. "
             f"Operacoes realmente disponiveis: {', '.join(disponiveis) or '(nao foi possivel listar)'}. "
-            "Ajuste OPERACOES_ENVIO_CANDIDATAS / OPERACOES_RESULTADO_CANDIDATAS em gnre_client.py."
+            "Ajuste a lista de operacoes candidatas correspondente em gnre_client.py."
         )
 
 
