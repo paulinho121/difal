@@ -39,5 +39,5 @@ def test_uf_sem_gnre_nacional_e_sinalizada():
 def test_uf_suportada_gnre_nacional_helper():
     assert uf_suportada_gnre_nacional("MG") is True
     assert uf_suportada_gnre_nacional("SP") is False
-    assert uf_suportada_gnre_nacional("RJ") is False
+    assert uf_suportada_gnre_nacional("RJ") is True
     assert uf_suportada_gnre_nacional(None) is True

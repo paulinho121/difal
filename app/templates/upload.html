@@ -145,15 +145,15 @@
             }
             const avisos = (r.avisos || []).map(a => `<li class="text-amber-700">${a}</li>`).join('');
             const semSuporte = !r.uf_suportada;
-            const corBorda = semSuporte ? 'border-l-error' : (r.divergente ? 'border-l-amber-500' : 'border-l-green-500');
+            const corBorda = (semSuporte || r.divergente) ? 'border-l-amber-500' : 'border-l-green-500';
             return `<div class="glass-panel p-stack-md rounded-lg border-l-4 ${corBorda}">
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="font-bold text-on-surface">${r.arquivo}</p>
                         <p class="text-body-sm text-on-surface-variant">NF-e ${r.chave_acesso} • UF destino ${r.uf_destino}</p>
                     </div>
-                    <span class="text-xs font-label-sm px-2 py-1 rounded-full ${semSuporte ? 'bg-error-container/30 text-error' : 'bg-green-100 text-green-700'}">
-                        ${semSuporte ? 'UF não suportada' : 'Calculado'}
+                    <span class="text-xs font-label-sm px-2 py-1 rounded-full ${semSuporte ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}">
+                        ${semSuporte ? 'Calculado — conferir UF' : 'Calculado'}
                     </span>
                 </div>
                 <div class="grid grid-cols-3 gap-stack-md mt-stack-md text-center">
@@ -162,11 +162,11 @@
                     <div><p class="text-label-sm text-on-surface-variant">Total</p><p class="font-label-md font-bold text-primary">${fmtMoeda(r.valor_total)}</p></div>
                 </div>
                 ${avisos ? `<ul class="mt-stack-md text-xs list-disc list-inside space-y-1">${avisos}</ul>` : ''}
-                ${!semSuporte ? `<div class="mt-stack-md flex justify-end">
+                <div class="mt-stack-md flex justify-end">
                     <button onclick="confirmarGuia(${r.guia_id}, this)" class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md hover:brightness-110">
                         Revisar e confirmar emissão
                     </button>
-                </div>` : ''}
+                </div>
             </div>`;
         }
 

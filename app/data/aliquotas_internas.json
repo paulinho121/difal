@@ -35,7 +35,7 @@
     "_observacao": "Preencha aqui prefixos de NCM com aliquota interna diferente da padrao da UF (ex.: itens de cesta basica, supergerfluos, energia, combustiveis). Formato: 'UF': {'PREFIXO_NCM': aliquota}"
   },
   "ufs_sem_gnre_nacional": {
-    "_observacao": "Estas UFs nao usam o Portal Nacional GNRE para tributos proprios -- exigem guia estadual especifica (ex.: GARE-ICMS em SP, DARJ no RJ). O sistema deve avisar em vez de tentar enviar.",
-    "lista": ["SP", "RJ", "ES", "GO"]
+    "_observacao": "UFs sobre as quais NAO foi possivel confirmar que o GNRE nacional aceita DIFAL com a receita 100102 (podem exigir guia/receita estadual propria). O sistema apenas AVISA e deixa o GNRE aceitar ou recusar (recusa nao gera debito). RJ foi removida: a Fazenda-RJ documenta o DIFAL por operacao via Portal Nacional GNRE.",
+    "lista": ["SP", "ES", "GO"]
   }
 }

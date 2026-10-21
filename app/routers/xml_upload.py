@@ -61,7 +61,7 @@ def _persistir_nota(db: Session, nfe, validacao) -> NotaFiscal:
 
     guia = Guia(
         nota_fiscal_id=nota.id,
-        status="aguardando_confirmacao" if validacao.uf_suportada else "erro",
+        status="aguardando_confirmacao",
         uf_favorecida=nfe.uf_destino,
         codigo_receita_difal=gnre_xml_builder.RECEITA_DIFAL_POR_OPERACAO if validacao.valor_difal_total > 0 else None,
         codigo_receita_fcp=gnre_xml_builder.RECEITA_FCP_POR_OPERACAO if validacao.valor_fcp_total > 0 else None,
@@ -69,12 +69,6 @@ def _persistir_nota(db: Session, nfe, validacao) -> NotaFiscal:
         valor_fcp=validacao.valor_fcp_total,
         valor_total=round(validacao.valor_difal_total + validacao.valor_fcp_total, 2),
         data_vencimento=data_vencimento,
-        mensagem_erro=(
-            f"UF de destino {nfe.uf_destino} nao e suportada pelo Portal Nacional GNRE "
-            "(usa guia estadual propria)."
-            if not validacao.uf_suportada
-            else None
-        ),
     )
     db.add(guia)
     return nota
@@ -121,7 +115,16 @@ async def upload_xmls(files: list[UploadFile], db: Session = Depends(get_db)):
                 "valor_fcp": validacao.valor_fcp_total,
                 "valor_total": round(validacao.valor_difal_total + validacao.valor_fcp_total, 2),
                 "divergente": validacao.divergente,
-                "avisos": [aviso for item in validacao.itens for aviso in item.avisos],
+                "avisos": (
+                    [
+                        f"UF de destino {nota.uf_destino}: nao foi possivel confirmar que o GNRE nacional "
+                        "aceita o recolhimento do DIFAL com a receita usada (pode exigir guia/receita "
+                        "estadual propria). Se nao aceitar, o GNRE recusa o lote sem gerar debito."
+                    ]
+                    if not validacao.uf_suportada
+                    else []
+                )
+                + [aviso for item in validacao.itens for aviso in item.avisos],
             }
         )
 
