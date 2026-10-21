@@ -46,6 +46,12 @@ RECEITA_FCP_APURACAO_MENSAL = "100137"
 
 VALOR_TIPO_PRINCIPAL_ICMS = "11"
 VALOR_TIPO_PRINCIPAL_FCP = "12"
+VALOR_TIPO_TOTAL_ICMS = "21"
+VALOR_TIPO_TOTAL_FCP = "22"
+# Cada principal vem acompanhado do seu total (sem juros/multa, total = principal),
+# como na implementacao de referencia (sped-gnre LoteV2); sem o total o GNRE
+# recusa com 290 "valor da GNRE diverge do somatorio dos valores dos itens".
+_TOTAL_DE = {VALOR_TIPO_PRINCIPAL_ICMS: VALOR_TIPO_TOTAL_ICMS, VALOR_TIPO_PRINCIPAL_FCP: VALOR_TIPO_TOTAL_FCP}
 
 
 class GnreXmlValidationError(Exception):
@@ -165,7 +171,7 @@ def _montar_item(itens_el, guia: GuiaParaEmitir, receita: str, valores: list[tup
         _sub(ref, "mes", f"{guia.data_emissao.month:02d}")
         _sub(ref, "ano", str(guia.data_emissao.year))
     _sub(item, "dataVencimento", guia.data_vencimento.isoformat())
-    for tipo, valor in valores:
+    for tipo, valor in valores + [(_TOTAL_DE[t], v) for t, v in valores]:
         el = etree.SubElement(item, f"{{{GNRE_NS}}}valor")
         el.set("tipo", tipo)
         el.text = f"{valor:.2f}"
@@ -240,6 +246,8 @@ def montar_dados_gnre(parent_guias, empresa: ContribuinteEmitente, guia: GuiaPar
         valores = valores_icms + ([(VALOR_TIPO_PRINCIPAL_FCP, guia.valor_fcp)] if tem_fcp else [])
         _montar_item(itens_el, guia, RECEITA_DIFAL_POR_OPERACAO, valores, "numeroControle")
 
+    # Total da guia = soma dos itens (o GNRE confere: erro 290 se divergir).
+    _sub(dados, "valorGNRE", f"{round(guia.valor_difal + guia.valor_fcp, 2):.2f}")
     if regras.exige_data_pagamento:
         _sub(dados, "dataPagamento", guia.data_pagamento.isoformat())
 

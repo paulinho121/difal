@@ -53,6 +53,9 @@ def test_lote_padrao_segue_regras_do_rj_fcp_no_mesmo_item_e_valida_no_xsd():
     assert "<tipoGnre>0</tipoGnre>" in xml_texto
     assert '<valor tipo="11">60.00</valor>' in xml_texto
     assert '<valor tipo="12">20.00</valor>' in xml_texto  # FCP no mesmo item
+    assert '<valor tipo="21">60.00</valor>' in xml_texto  # total do ICMS
+    assert '<valor tipo="22">20.00</valor>' in xml_texto  # total do FCP
+    assert "<valorGNRE>80.00</valorGNRE>" in xml_texto  # soma dos itens (GNRE confere: erro 290)
     assert '<documentoOrigem tipo="24">' in xml_texto  # CHAVE DO DFe
     assert "<dataPagamento>2026-07-22</dataPagamento>" in xml_texto
     compacto = "".join(xml_texto.split())
