@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
@@ -69,8 +71,16 @@ def testar_certificado(db: Session = Depends(get_db)):
     conteudo, senha = certificado_manager.carregar_certificado(empresa.certificado)
     cert_pem, key_pem = certificado_manager.pfx_para_pem(conteudo, senha)
 
+    # Diagnostico: deixa claro contra qual ambiente (producao x homologacao)
+    # o app esta falando, ja que a habilitacao do CNPJ e separada por ambiente.
+    ambiente = {
+        "ambiente_host": urlparse(gnre_client.GNRE_LOTE_RECEPCAO_URL).hostname,
+        "ssl_verificado": gnre_client._VERIFICAR_SSL,
+        "cnpj_certificado": empresa.certificado.cnpj_certificado,
+    }
+
     try:
         resultado = gnre_client.testar_conectividade(cert_pem, key_pem)
-        return {"ok": True, **resultado}
+        return {"ok": True, **ambiente, **resultado}
     except Exception as exc:  # noqa: BLE001 -- resultado de teste de conectividade real, precisa aparecer pro usuario
-        return {"ok": False, "erro": str(exc)}
+        return {"ok": False, **ambiente, "erro": str(exc)}
