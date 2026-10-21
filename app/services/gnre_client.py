@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 import tempfile
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import requests
 from lxml import etree
@@ -90,6 +90,9 @@ class GuiaResultado:
     linha_digitavel: str | None
     codigo_barras: str | None
     motivos_rejeicao: list[dict]
+    data_limite_pagamento: str | None = None  # AAAA-MM-DD
+    nosso_numero: str | None = None
+    informacoes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -150,8 +153,8 @@ def _traduzir_erro(exc: Exception, registro: list) -> GnreClientError:
     resumo = "; ".join(registro) if registro else "nenhuma requisicao concluida"
     if "(429)" in texto or "429 Too Many Requests" in texto:
         return GnreClientError(
-            "O GNRE limitou as requisicoes (429 Too Many Requests) -- nenhuma guia foi criada. "
-            f"Aguarde alguns minutos e tente de novo. Requisicoes desta tentativa: {resumo}"
+            "O GNRE limitou as requisicoes (429 Too Many Requests). Aguarde alguns minutos e tente de novo "
+            f"(se era um envio, nenhuma guia foi criada). Requisicoes desta tentativa: {resumo}"
         )
     return GnreClientError(f"{texto} | Requisicoes desta tentativa: {resumo}")
 
@@ -345,8 +348,17 @@ def _parsear_resultado_lote(resposta_texto: str) -> ResultadoConsultaLote:
                 }
             )
 
+        limite_el = first(guia_el, "dataLimitePagamento")
+        nosso_el = first(guia_el, "nossoNumero")
+        informacoes = [
+            i.text.strip() for i in guia_el.xpath(".//*[local-name()='informacao']") if i.text and i.text.strip()
+        ]
+
         guias.append(
             GuiaResultado(
+                data_limite_pagamento=limite_el.text.strip() if limite_el is not None and limite_el.text else None,
+                nosso_numero=nosso_el.text.strip() if nosso_el is not None and nosso_el.text else None,
+                informacoes=informacoes,
                 situacao=situacao_el.text if situacao_el is not None else None,
                 valor_gnre=float(valor_el.text) if valor_el is not None and valor_el.text else None,
                 linha_digitavel=linha_el.text if linha_el is not None else None,

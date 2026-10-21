@@ -64,3 +64,21 @@ def test_consulta_de_lote_e_xml_valido_com_ambiente_e_recibo():
     xml = etree.tostring(el).decode()
     assert "TConsLote_GNRE" in xml and "<ambiente>1</ambiente>" in xml.replace("ns0:", "")
     assert "2026000123" in xml
+
+
+def test_resultado_da_consulta_traz_limite_nosso_numero_e_informacoes():
+    xml = (
+        '<ns1:TResultLote_GNRE xmlns:ns1="http://www.gnre.pe.gov.br"><ns1:ambiente>1</ns1:ambiente>'
+        "<ns1:situacaoProcess><ns1:codigo>400</ns1:codigo><ns1:descricao>ok</ns1:descricao></ns1:situacaoProcess>"
+        '<ns1:resultado><ns1:guia versao="2.00"><ns1:situacaoGuia>0</ns1:situacaoGuia>'
+        "<ns1:valorGNRE>38.96</ns1:valorGNRE><ns1:dataLimitePagamento>2026-10-23</ns1:dataLimitePagamento>"
+        "<ns1:informacoesComplementares><ns1:informacao>Linha 1</ns1:informacao></ns1:informacoesComplementares>"
+        "<ns1:nossoNumero>1234567890123456</ns1:nossoNumero>"
+        "<ns1:linhaDigitavel>" + "1" * 48 + "</ns1:linhaDigitavel></ns1:guia></ns1:resultado></ns1:TResultLote_GNRE>"
+    )
+    g = gnre_client._parsear_resultado_lote(xml).guias[0]
+    assert g.valor_gnre == 38.96
+    assert g.data_limite_pagamento == "2026-10-23"
+    assert g.nosso_numero == "1234567890123456"
+    assert g.informacoes == ["Linha 1"]
+    assert g.linha_digitavel == "1" * 48

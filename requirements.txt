@@ -10,6 +10,7 @@ jinja2==3.1.5
 python-multipart==0.0.20
 python-dotenv==1.0.1
 pydantic==2.11.7
+reportlab==4.2.5
 
 # dev/test
 pytest==8.3.4

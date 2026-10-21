@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.empresa_singleton import get_or_create_empresa
 from app.models import Guia
-from app.services import certificado_manager, gnre_client, gnre_regras, gnre_xml_builder
+from app.services import certificado_manager, gnre_boleto, gnre_client, gnre_regras, gnre_xml_builder
 from app.services.nfe_parser import parse_nfe_xml
 
 router = APIRouter(prefix="/api/guias", tags=["guias"])
@@ -18,6 +18,35 @@ _BRASILIA = timezone(timedelta(hours=-3))  # sem horario de verao desde 2019
 
 def _hoje_brasilia():
     return datetime.now(_BRASILIA).date()
+
+
+DESCRICAO_RECEITA = {
+    "100102": "ICMS Consumidor Final Não Contribuinte Outra UF por Operação",
+}
+
+
+def _dados_boleto(guia: Guia, limite=None, nosso_numero=None, informacoes=None) -> gnre_boleto.DadosBoleto:
+    nota = guia.nota_fiscal
+    emitente = gnre_xml_builder.contribuinte_emitente_da_nfe(parse_nfe_xml(nota.xml_raw.encode("utf-8")))
+    receita = gnre_xml_builder.RECEITA_DIFAL_POR_OPERACAO
+    return gnre_boleto.DadosBoleto(
+        linha_digitavel=guia.linha_digitavel,
+        valor_total=guia.valor_total,
+        uf_favorecida=guia.uf_favorecida or "",
+        receita=receita,
+        descricao_receita=DESCRICAO_RECEITA.get(receita, "ICMS DIFAL"),
+        emitente_nome=emitente.razao_social if emitente else "",
+        emitente_documento=emitente.cnpj if emitente else "",
+        destinatario_nome=nota.destinatario_nome or "",
+        destinatario_documento=nota.destinatario_doc or "",
+        documento_origem=nota.chave_acesso,
+        data_vencimento=guia.data_vencimento,
+        data_limite_pagamento=limite,
+        valor_difal=guia.valor_difal,
+        valor_fcp=guia.valor_fcp,
+        nosso_numero=nosso_numero or guia.numero_guia,
+        informacoes=informacoes or [],
+    )
 
 
 def _serializar_guia(guia: Guia) -> dict:
@@ -33,7 +62,7 @@ def _serializar_guia(guia: Guia) -> dict:
         "protocolo_lote": guia.protocolo_lote,
         "data_vencimento": guia.data_vencimento.isoformat() if guia.data_vencimento else None,
         "linha_digitavel": guia.linha_digitavel,
-        "tem_pdf": bool(guia.pdf_base64),
+        "tem_pdf": bool(guia.pdf_base64 or guia.linha_digitavel),
         "mensagem_erro": guia.mensagem_erro,
         "criado_em": guia.criado_em.isoformat(),
         "atualizado_em": guia.atualizado_em.isoformat(),
@@ -203,6 +232,18 @@ def atualizar_status(guia_id: int, db: Session = Depends(get_db)):
                 guia.status = "emitida"
                 guia.linha_digitavel = guia_result.linha_digitavel
                 guia.mensagem_erro = None
+                if guia_result.valor_gnre:
+                    guia.valor_total = guia_result.valor_gnre  # inclui juros/multa se houver
+                if guia_result.nosso_numero:
+                    guia.numero_guia = guia_result.nosso_numero
+                try:
+                    limite = date.fromisoformat(guia_result.data_limite_pagamento) if guia_result.data_limite_pagamento else None
+                    pdf = gnre_boleto.gerar_pdf(
+                        _dados_boleto(guia, limite, guia_result.nosso_numero, guia_result.informacoes)
+                    )
+                    guia.pdf_base64 = base64.b64encode(pdf).decode("ascii")
+                except Exception as exc_pdf:  # noqa: BLE001 -- a guia ja esta emitida; o PDF pode ser refeito depois
+                    guia.mensagem_erro = f"Guia emitida, mas nao foi possivel montar o PDF: {exc_pdf}"
             else:
                 guia.status = "erro"
                 motivos = "; ".join(f"{m['codigo']}: {m['descricao']}" for m in guia_result.motivos_rejeicao)
@@ -232,11 +273,19 @@ def reemitir(guia_id: int, db: Session = Depends(get_db)):
 @router.get("/{guia_id}/pdf")
 def baixar_pdf(guia_id: int, db: Session = Depends(get_db)):
     guia = db.get(Guia, guia_id)
-    if guia is None or not guia.pdf_base64:
-        raise HTTPException(404, "PDF da guia ainda nao disponivel.")
-    conteudo = base64.b64decode(guia.pdf_base64)
+    if guia is None:
+        raise HTTPException(404, "Guia nao encontrada.")
+    if guia.pdf_base64:
+        conteudo = base64.b64decode(guia.pdf_base64)
+    elif guia.linha_digitavel:
+        try:
+            conteudo = gnre_boleto.gerar_pdf(_dados_boleto(guia))
+        except gnre_boleto.BoletoInvalidoError as exc:
+            raise HTTPException(422, str(exc)) from exc
+    else:
+        raise HTTPException(404, "Boleto ainda nao disponivel: a guia ainda nao foi emitida pelo GNRE.")
     return Response(
         content=conteudo,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="guia-{guia.id}.pdf"'},
+        headers={"Content-Disposition": f'inline; filename="gnre-{guia.uf_favorecida}-{guia.id}.pdf"'},
     )

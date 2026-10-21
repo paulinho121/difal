@@ -124,8 +124,11 @@
                 acoes = `<button onclick="atualizarStatus(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Atualizar Status</button>`;
             } else if (g.status === 'erro') {
                 acoes = `<button onclick="reemitir(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Reemitir</button>`;
-            } else if (g.status === 'emitida' && g.tem_pdf) {
-                acoes = `<a href="/api/guias/${g.id}/pdf" class="px-3 py-2 bg-primary text-on-primary rounded-lg font-label-md text-xs">Download PDF</a>`;
+            } else if (g.status === 'emitida') {
+                acoes = `<a href="/api/guias/${g.id}/pdf" target="_blank" class="px-3 py-2 bg-primary text-on-primary rounded-lg font-label-md text-xs text-center">Baixar boleto (PDF)</a>`;
+                if (g.linha_digitavel) {
+                    acoes += `<button onclick="copiarLinha('${g.linha_digitavel}', this)" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Copiar linha digitável</button>`;
+                }
             }
 
             const detalhe = `
@@ -185,6 +188,11 @@
             }
             await carregarLista(id);
         }
+
+        window.copiarLinha = async (linha, btn) => {
+            try { await navigator.clipboard.writeText(linha); btn.textContent = 'Copiado!'; }
+            catch (e) { prompt('Copie a linha digitável:', linha); }
+        };
 
         window.confirmar = (id) => chamarAcao(`/api/guias/${id}/confirmar`, id);
         window.atualizarStatus = (id) => chamarAcao(`/api/guias/${id}/atualizar-status`, id);
