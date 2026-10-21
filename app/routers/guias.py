@@ -175,7 +175,14 @@ def atualizar_status(guia_id: int, db: Session = Depends(get_db)):
         resultado = gnre_client.consultar_resultado_lote(guia.protocolo_lote, cert_pem, key_pem)
 
         if not resultado.guias:
-            guia.mensagem_erro = f"Sem retorno de guia ainda ({resultado.situacao_processo_descricao or 'processando'})."
+            if resultado.situacao_processo_descricao:
+                guia.mensagem_erro = (
+                    f"Sem guia no retorno ainda (codigo {resultado.situacao_processo_codigo}: "
+                    f"{resultado.situacao_processo_descricao})."
+                )
+            else:
+                # Formato de resposta nao reconhecido -- mostra o bruto pra diagnosticar.
+                guia.mensagem_erro = f"Resposta da consulta nao reconhecida. Resposta bruta: {resultado.resposta_bruta[:1200]}"
         else:
             guia_result = resultado.guias[0]
             if guia_result.situacao == gnre_client.SITUACAO_GUIA_PROCESSADA:

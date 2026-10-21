@@ -48,6 +48,12 @@ OPERACOES_RESULTADO_CANDIDATAS = [
 ]
 
 
+# situacaoRecepcao/codigo devolvido quando o lote foi aceito para processamento
+# (observado em producao: "Lote recebido com sucesso!"). Qualquer outro codigo
+# e tratado como rejeicao.
+CODIGO_LOTE_RECEBIDO = "100"
+
+
 class GnreClientError(Exception):
     pass
 
@@ -253,6 +259,8 @@ def _extrair_mensagem_rejeicao(resposta_texto: str) -> str | None:
     if not descricao:
         return None
     codigo_txt = codigo[0].text if codigo else "?"
+    if codigo_txt == CODIGO_LOTE_RECEBIDO:
+        return None  # "Lote recebido com sucesso!" -- e aceite, nao rejeicao
     return f"GNRE rejeitou o lote (codigo {codigo_txt}): {descricao[0].text}"
 
 
@@ -261,8 +269,12 @@ def _extrair_numero_recibo(resposta_texto: str) -> str | None:
         root = etree.fromstring(resposta_texto.encode("utf-8"))
     except etree.XMLSyntaxError:
         return None
-    found = root.xpath(".//*[local-name()='numeroRecibo']")
-    return found[0].text if found else None
+    # Resposta do envio: TRetLote_GNRE/recibo/numero. "numeroRecibo" e o nome
+    # no esquema de RESULTADO/consulta, mantido como alternativa.
+    found = root.xpath(".//*[local-name()='recibo']/*[local-name()='numero']")
+    if not found:
+        found = root.xpath(".//*[local-name()='numeroRecibo']")
+    return found[0].text.strip() if found and found[0].text else None
 
 
 def consultar_resultado_lote(protocolo: str, cert_pem: bytes, key_pem: bytes) -> ResultadoConsultaLote:
@@ -271,7 +283,7 @@ def consultar_resultado_lote(protocolo: str, cert_pem: bytes, key_pem: bytes) ->
         try:
             client = _client_mtls(GNRE_RESULTADO_LOTE_URL, cert_path, key_path, registro)
             operacao = _resolver_operacao(client, OPERACOES_RESULTADO_CANDIDATAS)
-            resposta = _chamar_operacao_protocolo(operacao, protocolo)
+            resposta = _chamar_operacao(operacao, _montar_consulta_lote(protocolo))
         except OperacaoSoapNaoEncontradaError:
             raise
         except Exception as exc:  # noqa: BLE001
@@ -280,25 +292,15 @@ def consultar_resultado_lote(protocolo: str, cert_pem: bytes, key_pem: bytes) ->
         return _parsear_resultado_lote(resposta_texto)
 
 
-_NOMES_PARAMETRO_PROTOCOLO_CANDIDATOS = ("numeroRecibo", "protocolo", "recibo", "nfeRecibo")
-
-
-def _chamar_operacao_protocolo(operacao, protocolo: str):
-    """Ainda nao testado contra o servico real -- se a operacao "processar"
-    do GnreResultadoLote tambem exigir um xsd:any (como a do GnreLoteRecepcao
-    exigiu), o protocolo provavelmente precisa ir dentro de um XML de
-    consulta em vez de string solta. Ajustar aqui igual foi feito em
-    enviar_lote() se o erro "Any element received object of type 'str'"
-    aparecer tambem nesta chamada."""
-    try:
-        return operacao(protocolo)
-    except TypeError:
-        for nome_param in _NOMES_PARAMETRO_PROTOCOLO_CANDIDATOS:
-            try:
-                return operacao(**{nome_param: protocolo})
-            except TypeError:
-                continue
-        raise
+def _montar_consulta_lote(protocolo: str) -> etree._Element:
+    """TConsLote_GNRE (xsd lote_gnre_consulta_v1.00): ambiente + numeroRecibo.
+    ambiente: 1 = producao, 2 = teste (homologacao)."""
+    ns = "http://www.gnre.pe.gov.br"
+    ambiente = "2" if "testegnre" in GNRE_RESULTADO_LOTE_URL else "1"
+    raiz = etree.Element(f"{{{ns}}}TConsLote_GNRE", nsmap={None: ns})
+    etree.SubElement(raiz, f"{{{ns}}}ambiente").text = ambiente
+    etree.SubElement(raiz, f"{{{ns}}}numeroRecibo").text = protocolo
+    return raiz
 
 
 def _parsear_resultado_lote(resposta_texto: str) -> ResultadoConsultaLote:
