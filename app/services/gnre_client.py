@@ -21,6 +21,7 @@ from dataclasses import dataclass
 import requests
 from lxml import etree
 from zeep import Client
+from zeep.cache import InMemoryCache
 from zeep.transports import Transport
 
 GNRE_LOTE_RECEPCAO_URL = os.getenv(
@@ -117,12 +118,36 @@ def _arquivos_cert_temporarios(cert_pem: bytes, key_pem: bytes):
 _VERIFICAR_SSL = os.getenv("GNRE_VERIFY_SSL", "true").strip().lower() != "false"
 
 
-def _client_mtls(wsdl_url: str, cert_path: str, key_path: str) -> Client:
+# O zeep, sem cache, baixa o WSDL (e os XSDs que ele importa) a cada Client().
+# Isso multiplica as requisicoes por tentativa e o nginx do GNRE ja respondeu
+# 429 Too Many Requests. Cache em memoria no modulo: vale enquanto a instancia
+# serverless estiver "quente" (varias tentativas seguidas reaproveitam).
+_CACHE_WSDL = InMemoryCache(timeout=3600)
+
+
+def _client_mtls(wsdl_url: str, cert_path: str, key_path: str, registro: list | None = None) -> Client:
     session = requests.Session()
     session.cert = (cert_path, key_path)
     session.verify = _VERIFICAR_SSL
-    transport = Transport(session=session, timeout=30, operation_timeout=60)
+    if registro is not None:
+        # Registra metodo/URL/status de cada requisicao desta tentativa, pra
+        # diagnosticar onde o 429 acontece (WSDL x envio) sem expor segredos.
+        session.hooks["response"].append(
+            lambda resp, *a, **k: registro.append(f"{resp.request.method} {resp.url} -> {resp.status_code}")
+        )
+    transport = Transport(session=session, cache=_CACHE_WSDL, timeout=30, operation_timeout=60)
     return Client(f"{wsdl_url}?wsdl", transport=transport)
+
+
+def _traduzir_erro(exc: Exception, registro: list) -> GnreClientError:
+    texto = str(exc)
+    resumo = "; ".join(registro) if registro else "nenhuma requisicao concluida"
+    if "(429)" in texto or "429 Too Many Requests" in texto:
+        return GnreClientError(
+            "O GNRE limitou as requisicoes (429 Too Many Requests) -- nenhuma guia foi criada. "
+            f"Aguarde alguns minutos e tente de novo. Requisicoes desta tentativa: {resumo}"
+        )
+    return GnreClientError(f"{texto} | Requisicoes desta tentativa: {resumo}")
 
 
 def _operacoes_do_client(client: Client) -> dict:
@@ -194,11 +219,17 @@ def _resposta_para_texto(resposta) -> str:
 
 
 def enviar_lote(xml_lote: bytes, cert_pem: bytes, key_pem: bytes) -> ResultadoEnvioLote:
+    registro: list[str] = []
     with _arquivos_cert_temporarios(cert_pem, key_pem) as (cert_path, key_path):
-        client = _client_mtls(GNRE_LOTE_RECEPCAO_URL, cert_path, key_path)
-        operacao = _resolver_operacao(client, OPERACOES_ENVIO_CANDIDATAS)
-        elemento_xml = etree.fromstring(xml_lote)
-        resposta = _chamar_operacao(operacao, elemento_xml)
+        try:
+            client = _client_mtls(GNRE_LOTE_RECEPCAO_URL, cert_path, key_path, registro)
+            operacao = _resolver_operacao(client, OPERACOES_ENVIO_CANDIDATAS)
+            elemento_xml = etree.fromstring(xml_lote)
+            resposta = _chamar_operacao(operacao, elemento_xml)
+        except OperacaoSoapNaoEncontradaError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise _traduzir_erro(exc, registro) from exc
         resposta_texto = _resposta_para_texto(resposta)
         return ResultadoEnvioLote(
             protocolo=_extrair_numero_recibo(resposta_texto),
@@ -235,10 +266,16 @@ def _extrair_numero_recibo(resposta_texto: str) -> str | None:
 
 
 def consultar_resultado_lote(protocolo: str, cert_pem: bytes, key_pem: bytes) -> ResultadoConsultaLote:
+    registro: list[str] = []
     with _arquivos_cert_temporarios(cert_pem, key_pem) as (cert_path, key_path):
-        client = _client_mtls(GNRE_RESULTADO_LOTE_URL, cert_path, key_path)
-        operacao = _resolver_operacao(client, OPERACOES_RESULTADO_CANDIDATAS)
-        resposta = _chamar_operacao_protocolo(operacao, protocolo)
+        try:
+            client = _client_mtls(GNRE_RESULTADO_LOTE_URL, cert_path, key_path, registro)
+            operacao = _resolver_operacao(client, OPERACOES_RESULTADO_CANDIDATAS)
+            resposta = _chamar_operacao_protocolo(operacao, protocolo)
+        except OperacaoSoapNaoEncontradaError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise _traduzir_erro(exc, registro) from exc
         resposta_texto = _resposta_para_texto(resposta)
         return _parsear_resultado_lote(resposta_texto)
 
