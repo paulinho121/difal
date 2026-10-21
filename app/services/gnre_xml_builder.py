@@ -32,6 +32,8 @@ from pathlib import Path
 
 from lxml import etree
 
+from app.services.nfe_parser import ParsedNFe
+
 GNRE_NS = "http://www.gnre.pe.gov.br"
 NSMAP = {None: GNRE_NS}
 
@@ -81,6 +83,28 @@ class GuiaParaEmitir:
     numero_controle: str | None = None
 
 
+def contribuinte_emitente_da_nfe(nfe: ParsedNFe) -> ContribuinteEmitente | None:
+    """O debito do DIFAL e de quem fez a venda -- a filial que emitiu a NF-e,
+    nao necessariamente o CNPJ do certificado digital (que pode ser o da
+    matriz, usado para autenticar todas as filiais). Retorna None se a nota
+    nao trouxer CNPJ/nome do emitente (o chamador usa a empresa cadastrada)."""
+    if not nfe.emitente_cnpj or not nfe.emitente_nome:
+        return None
+
+    endereco = " ".join(p for p in (nfe.emitente_logradouro, nfe.emitente_numero) if p) or None
+    telefone = "".join(c for c in (nfe.emitente_telefone or "") if c.isdigit())
+    cep = "".join(c for c in (nfe.emitente_cep or "") if c.isdigit())
+    return ContribuinteEmitente(
+        cnpj=nfe.emitente_cnpj,
+        razao_social=" ".join(nfe.emitente_nome.split()),
+        endereco=endereco,
+        municipio_ibge=nfe.emitente_municipio_ibge,
+        uf=nfe.uf_origem,
+        cep=cep if len(cep) == 8 else None,
+        telefone=telefone if 6 <= len(telefone) <= 11 else None,
+    )
+
+
 def _sub(parent, tag, text=None):
     el = etree.SubElement(parent, f"{{{GNRE_NS}}}{tag}")
     if text is not None:
@@ -122,7 +146,7 @@ def _montar_item_difal(itens_el, guia: GuiaParaEmitir):
     dest = _sub(item, "contribuinteDestinatario")
     _identificacao(dest, guia.destinatario.documento)
     if guia.destinatario.nome:
-        _sub(dest, "razaoSocial", guia.destinatario.nome[:60])
+        _sub(dest, "razaoSocial", guia.destinatario.nome[:60].strip())
     if guia.destinatario.municipio_ibge:
         _sub(dest, "municipio", _municipio_gnre(guia.destinatario.municipio_ibge))
 
@@ -144,7 +168,7 @@ def _montar_item_fcp(itens_el, guia: GuiaParaEmitir):
     dest = _sub(item, "contribuinteDestinatario")
     _identificacao(dest, guia.destinatario.documento)
     if guia.destinatario.nome:
-        _sub(dest, "razaoSocial", guia.destinatario.nome[:60])
+        _sub(dest, "razaoSocial", guia.destinatario.nome[:60].strip())
     if guia.destinatario.municipio_ibge:
         _sub(dest, "municipio", _municipio_gnre(guia.destinatario.municipio_ibge))
 
@@ -169,9 +193,9 @@ def montar_dados_gnre(parent_guias, empresa: ContribuinteEmitente, guia: GuiaPar
 
     contrib = _sub(dados, "contribuinteEmitente")
     _identificacao(contrib, empresa.cnpj)
-    _sub(contrib, "razaoSocial", empresa.razao_social[:60])
+    _sub(contrib, "razaoSocial", empresa.razao_social[:60].strip())
     if empresa.endereco:
-        _sub(contrib, "endereco", empresa.endereco[:60])
+        _sub(contrib, "endereco", empresa.endereco[:60].strip())
     if empresa.municipio_ibge:
         _sub(contrib, "municipio", _municipio_gnre(empresa.municipio_ibge))
     if empresa.uf:

@@ -86,3 +86,39 @@ def test_lote_acima_de_50_guias_levanta_erro():
     guias = [_guia(chave_nfe=f"{i:044d}") for i in range(51)]
     with pytest.raises(GnreXmlValidationError):
         montar_lote_xml(EMPRESA, guias)
+
+
+def _nfe_exemplo():
+    from pathlib import Path
+
+    from app.services.nfe_parser import parse_nfe_xml
+
+    return parse_nfe_xml((Path(__file__).parent / "fixtures" / "nfe_exemplo_difal.xml").read_bytes())
+
+
+def test_contribuinte_emitente_vem_do_emitente_da_nfe_e_nao_do_certificado():
+    from app.services.gnre_xml_builder import contribuinte_emitente_da_nfe
+
+    emitente = contribuinte_emitente_da_nfe(_nfe_exemplo())
+    assert emitente.cnpj == "12345678000199"
+    assert emitente.razao_social == "LOGISTICA AVANCADA BRASIL LTDA"
+    assert emitente.uf == "SP"
+    assert emitente.municipio_ibge == "3550308"
+    assert emitente.cep == "01000000"
+    assert emitente.endereco == "Rua das Industrias 100"
+
+
+def test_emitente_da_nfe_gera_lote_valido_no_xsd():
+    from app.services.gnre_xml_builder import contribuinte_emitente_da_nfe
+
+    emitente = contribuinte_emitente_da_nfe(_nfe_exemplo())
+    xml_texto = montar_lote_xml(emitente, [_guia()]).decode("utf-8")
+    assert "<CNPJ>12345678000199</CNPJ>" in xml_texto
+
+
+def test_emitente_sem_cnpj_retorna_none_para_usar_fallback():
+    from app.services.gnre_xml_builder import contribuinte_emitente_da_nfe
+
+    nfe = _nfe_exemplo()
+    nfe.emitente_cnpj = None
+    assert contribuinte_emitente_da_nfe(nfe) is None

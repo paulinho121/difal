@@ -8,6 +8,7 @@ from app.database import get_db
 from app.empresa_singleton import get_or_create_empresa
 from app.models import Guia
 from app.services import certificado_manager, gnre_client, gnre_xml_builder
+from app.services.nfe_parser import parse_nfe_xml
 
 router = APIRouter(prefix="/api/guias", tags=["guias"])
 
@@ -104,7 +105,11 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
     try:
         cert_pem, key_pem = _carregar_cert_da_empresa(db)
 
-        empresa_builder = gnre_xml_builder.ContribuinteEmitente(
+        # A guia sai em nome de quem emitiu a NF-e (a filial), nao do CNPJ do
+        # certificado. Se a nota nao trouxer os dados, cai na empresa cadastrada.
+        empresa_builder = gnre_xml_builder.contribuinte_emitente_da_nfe(
+            parse_nfe_xml(nota.xml_raw.encode("utf-8"))
+        ) or gnre_xml_builder.ContribuinteEmitente(
             cnpj=empresa.cnpj,
             razao_social=empresa.razao_social,
             endereco=empresa.endereco,

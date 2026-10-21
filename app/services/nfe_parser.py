@@ -54,6 +54,14 @@ class ParsedNFe:
     valor_total_produtos: float
     valor_total_nota: float
     itens: list[ItemICMSUFDest] = field(default_factory=list)
+    # Dados cadastrais do emitente (a filial que fez a venda), usados como
+    # "contribuinte emitente" da guia GNRE.
+    emitente_nome: str | None = None
+    emitente_logradouro: str | None = None
+    emitente_numero: str | None = None
+    emitente_municipio_ibge: str | None = None
+    emitente_cep: str | None = None
+    emitente_telefone: str | None = None
 
 
 def _text(el, path: str) -> str | None:
@@ -106,6 +114,12 @@ def parse_nfe_xml(xml_bytes: bytes) -> ParsedNFe:
 
     emitente_cnpj = _text(emit, "nfe:CNPJ") if emit is not None else None
     uf_origem = _text(emit, "nfe:enderEmit/nfe:UF") if emit is not None else None
+    emitente_nome = _text(emit, "nfe:xNome") if emit is not None else None
+    emitente_logradouro = _text(emit, "nfe:enderEmit/nfe:xLgr") if emit is not None else None
+    emitente_numero = _text(emit, "nfe:enderEmit/nfe:nro") if emit is not None else None
+    emitente_municipio_ibge = _text(emit, "nfe:enderEmit/nfe:cMun") if emit is not None else None
+    emitente_cep = _text(emit, "nfe:enderEmit/nfe:CEP") if emit is not None else None
+    emitente_telefone = _text(emit, "nfe:enderEmit/nfe:fone") if emit is not None else None
 
     destinatario_doc = None
     destinatario_nome = None
@@ -166,4 +180,10 @@ def parse_nfe_xml(xml_bytes: bytes) -> ParsedNFe:
         valor_total_produtos=valor_total_produtos,
         valor_total_nota=valor_total_nota,
         itens=itens,
+        emitente_nome=emitente_nome,
+        emitente_logradouro=emitente_logradouro,
+        emitente_numero=emitente_numero,
+        emitente_municipio_ibge=emitente_municipio_ibge,
+        emitente_cep=emitente_cep,
+        emitente_telefone=emitente_telefone,
     )
