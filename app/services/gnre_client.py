@@ -361,3 +361,33 @@ def _parsear_resultado_lote(resposta_texto: str) -> ResultadoConsultaLote:
         guias=guias,
         resposta_bruta=resposta_texto,
     )
+
+
+def _ambiente_codigo(url: str) -> str:
+    """1 = producao, 2 = teste (homologacao)."""
+    return "2" if "testegnre" in url else "1"
+
+
+def consultar_config_uf(uf: str, receita: str | None, cert_pem: bytes, key_pem: bytes) -> str:
+    """GnreConfigUF/consultar (somente leitura): regras de preenchimento de uma
+    UF, opcionalmente para uma receita. Retorna o XML de resposta (TConfigUf)
+    como texto. Usado para descobrir quais receitas a UF aceita, em vez de
+    chutar. Formato do pedido: TConsultaConfigUf (xsd consulta_config_uf_v1.00)."""
+    ns = "http://www.gnre.pe.gov.br"
+    raiz = etree.Element(f"{{{ns}}}TConsultaConfigUf", nsmap={None: ns})
+    etree.SubElement(raiz, f"{{{ns}}}ambiente").text = _ambiente_codigo(GNRE_CONFIG_UF_URL)
+    etree.SubElement(raiz, f"{{{ns}}}uf").text = uf
+    if receita:
+        etree.SubElement(raiz, f"{{{ns}}}receita").text = receita
+
+    registro: list[str] = []
+    with _arquivos_cert_temporarios(cert_pem, key_pem) as (cert_path, key_path):
+        try:
+            client = _client_mtls(GNRE_CONFIG_UF_URL, cert_path, key_path, registro)
+            operacao = _resolver_operacao(client, ["consultar"])
+            resposta = _chamar_operacao(operacao, raiz)
+        except OperacaoSoapNaoEncontradaError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise _traduzir_erro(exc, registro) from exc
+    return _resposta_para_texto(resposta)

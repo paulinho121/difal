@@ -84,3 +84,19 @@ def testar_certificado(db: Session = Depends(get_db)):
         return {"ok": True, **ambiente, **resultado}
     except Exception as exc:  # noqa: BLE001 -- resultado de teste de conectividade real, precisa aparecer pro usuario
         return {"ok": False, **ambiente, "erro": str(exc)}
+
+
+@router.get("/config-uf")
+def consultar_config_uf(uf: str, receita: str | None = None, db: Session = Depends(get_db)):
+    """Somente leitura: regras do GNRE para uma UF (e receita). Serve para
+    descobrir quais receitas a UF aceita antes de emitir."""
+    empresa = get_or_create_empresa(db)
+    if empresa.certificado is None:
+        raise HTTPException(400, "Nenhum certificado cadastrado ainda.")
+    conteudo, senha = certificado_manager.carregar_certificado(empresa.certificado)
+    cert_pem, key_pem = certificado_manager.pfx_para_pem(conteudo, senha)
+    try:
+        xml = gnre_client.consultar_config_uf(uf.upper(), receita, cert_pem, key_pem)
+        return {"ok": True, "uf": uf.upper(), "receita": receita, "xml": xml}
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "erro": str(exc)}
