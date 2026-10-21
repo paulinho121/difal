@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -7,10 +8,16 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.empresa_singleton import get_or_create_empresa
 from app.models import Guia
-from app.services import certificado_manager, gnre_client, gnre_xml_builder
+from app.services import certificado_manager, gnre_client, gnre_regras, gnre_xml_builder
 from app.services.nfe_parser import parse_nfe_xml
 
 router = APIRouter(prefix="/api/guias", tags=["guias"])
+
+_BRASILIA = timezone(timedelta(hours=-3))  # sem horario de verao desde 2019
+
+
+def _hoje_brasilia():
+    return datetime.now(_BRASILIA).date()
 
 
 def _serializar_guia(guia: Guia) -> dict:
@@ -130,6 +137,13 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
             ),
             data_vencimento=guia.data_vencimento,
             numero_controle=f"{nota.numero or ''}{nota.serie or ''}"[:20] or None,
+            data_emissao=nota.data_emissao.date() if nota.data_emissao else None,
+            # Vencimento = data da operacao; a data prevista de pagamento (hoje)
+            # permite ao GNRE calcular juros/multa de guia paga em atraso.
+            data_pagamento=_hoje_brasilia(),
+            regras=gnre_regras.obter_regras(
+                guia.uf_favorecida, gnre_xml_builder.RECEITA_DIFAL_POR_OPERACAO, cert_pem, key_pem
+            )[0],
         )
 
         xml_lote = gnre_xml_builder.montar_lote_xml(empresa_builder, [guia_builder])

@@ -36,29 +36,57 @@ def _guia(**overrides):
         ),
         data_vencimento=date(2026, 7, 20),
         numero_controle="000123451",
+        data_emissao=date(2026, 7, 20),
+        data_pagamento=date(2026, 7, 22),
     )
     base.update(overrides)
     return GuiaParaEmitir(**base)
 
 
-def test_monta_lote_com_difal_e_fcp_e_valida_contra_xsd():
+def test_lote_padrao_segue_regras_do_rj_fcp_no_mesmo_item_e_valida_no_xsd():
     xml_bytes = montar_lote_xml(EMPRESA, [_guia()])
     xml_texto = xml_bytes.decode("utf-8")
 
+    assert xml_texto.count("<receita>") == 1
+    assert f"<receita>{RECEITA_DIFAL_POR_OPERACAO}</receita>" in xml_texto
+    assert RECEITA_FCP_POR_OPERACAO not in xml_texto
+    assert "<tipoGnre>0</tipoGnre>" in xml_texto
+    assert '<valor tipo="11">60.00</valor>' in xml_texto
+    assert '<valor tipo="12">20.00</valor>' in xml_texto  # FCP no mesmo item
+    assert '<documentoOrigem tipo="24">' in xml_texto  # CHAVE DO DFe
+    assert "<dataPagamento>2026-07-22</dataPagamento>" in xml_texto
+    compacto = "".join(xml_texto.split())
+    assert "<codigo>117</codigo><valor>2026-07-20</valor>" in compacto
+    validar_contra_xsd(xml_bytes)  # nao levanta == valido no XSD oficial
+
+
+def test_fcp_em_receita_propria_quando_a_uf_exige_item_separado():
+    from app.services.gnre_regras import RegrasReceita
+
+    guia = _guia(regras=RegrasReceita(fecp_no_mesmo_item=False))
+    xml_texto = montar_lote_xml(EMPRESA, [guia]).decode("utf-8")
     assert f"<receita>{RECEITA_DIFAL_POR_OPERACAO}</receita>" in xml_texto
     assert f"<receita>{RECEITA_FCP_POR_OPERACAO}</receita>" in xml_texto
-    assert "<tipoGnre>2</tipoGnre>" in xml_texto  # multiplas receitas: DIFAL + FCP
-    assert '<valor tipo="11">60.00</valor>' in xml_texto
-    assert '<valor tipo="12">20.00</valor>' in xml_texto
-    # nao levanta excecao == validou contra o XSD oficial
-    validar_contra_xsd(xml_bytes)
+    assert "<tipoGnre>2</tipoGnre>" in xml_texto
 
 
 def test_monta_lote_somente_difal_usa_tipo_gnre_simples():
-    xml_bytes = montar_lote_xml(EMPRESA, [_guia(valor_fcp=0.0)])
-    xml_texto = xml_bytes.decode("utf-8")
+    xml_texto = montar_lote_xml(EMPRESA, [_guia(valor_fcp=0.0)]).decode("utf-8")
     assert "<tipoGnre>0</tipoGnre>" in xml_texto
-    assert RECEITA_FCP_POR_OPERACAO not in xml_texto
+    assert 'tipo="12"' not in xml_texto
+
+
+def test_exigencia_nao_suportada_barra_o_envio_antes_do_gnre():
+    from app.services.gnre_regras import RegrasReceita
+
+    guia = _guia(regras=RegrasReceita(pendencias=["convenio obrigatorio"]))
+    with pytest.raises(GnreXmlValidationError, match="convenio obrigatorio"):
+        montar_lote_xml(EMPRESA, [guia])
+
+
+def test_data_de_pagamento_obrigatoria_sem_data_levanta_erro():
+    with pytest.raises(GnreXmlValidationError, match="data prevista de pagamento"):
+        montar_lote_xml(EMPRESA, [_guia(data_pagamento=None)])
 
 
 def test_municipio_gnre_remove_prefixo_de_uf():

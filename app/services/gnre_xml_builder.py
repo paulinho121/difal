@@ -15,23 +15,23 @@ Codigos de receita usados (confirmados via pesquisa, nao suposicao):
   100102 = DIFAL por operacao       100110 = DIFAL apuracao mensal
   100129 = FCP por operacao         100137 = FCP apuracao mensal
 
-ATENCAO / suposicao a validar antes de ir para producao: o atributo `tipo` de
-`documentoOrigem` (2 digitos) nao veio explicitado no XSD com sua tabela de
-valores. Usamos "01" (convencao comum para "chave de NF-e" em varias
-integracoes GNRE) — confirme via GnreConfigUF para a UF de destino real antes
-do primeiro envio; se estiver errado, a SEFAZ rejeita o lote com uma mensagem
-de erro clara (falha segura, nao gera guia com dado errado).
+As exigencias que variam por UF/receita (tipo do documento de origem -- 24 =
+CHAVE DO DFe no RJ --, FCP no mesmo item ou em receita propria, data prevista
+de pagamento, campos extras, produto) vem do GnreConfigUF via
+app/services/gnre_regras.py; sem a consulta, usa os defaults do RJ/100102,
+confirmados ao vivo.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
 from lxml import etree
 
+from app.services.gnre_regras import RegrasReceita
 from app.services.nfe_parser import ParsedNFe
 
 GNRE_NS = "http://www.gnre.pe.gov.br"
@@ -43,8 +43,6 @@ RECEITA_DIFAL_POR_OPERACAO = "100102"
 RECEITA_DIFAL_APURACAO_MENSAL = "100110"
 RECEITA_FCP_POR_OPERACAO = "100129"
 RECEITA_FCP_APURACAO_MENSAL = "100137"
-
-TIPO_DOC_ORIGEM_NFE = "01"  # suposicao a confirmar, ver aviso no docstring do modulo
 
 VALOR_TIPO_PRINCIPAL_ICMS = "11"
 VALOR_TIPO_PRINCIPAL_FCP = "12"
@@ -81,6 +79,9 @@ class GuiaParaEmitir:
     destinatario: ContribuinteDestinatario
     data_vencimento: date
     numero_controle: str | None = None
+    data_emissao: date | None = None  # da NF-e; alguns campos extras exigem
+    data_pagamento: date | None = None  # data prevista de pagamento (GNRE calcula juros/multa)
+    regras: RegrasReceita = field(default_factory=RegrasReceita)
 
 
 def contribuinte_emitente_da_nfe(nfe: ParsedNFe) -> ContribuinteEmitente | None:
@@ -132,16 +133,42 @@ def _identificacao(parent, documento: str):
     return ident
 
 
-def _montar_item_difal(itens_el, guia: GuiaParaEmitir):
+def _valor_campo_extra(campo, guia: GuiaParaEmitir) -> str:
+    titulo = campo.titulo.lower()
+    if "emiss" in titulo:  # "Data de Emissao" (tolera acento corrompido)
+        if guia.data_emissao is None:
+            raise GnreXmlValidationError("A UF exige a data de emissao da NF-e, mas ela nao foi informada.")
+        return guia.data_emissao.isoformat()
+    if "complementares" in titulo:
+        return f"NF-e {guia.numero_controle or ''}".strip()[:100]
+    raise GnreXmlValidationError(
+        f"A UF exige o campo extra {campo.codigo} (\"{campo.titulo}\"), que o sistema ainda nao sabe preencher."
+    )
+
+
+def _montar_item(itens_el, guia: GuiaParaEmitir, receita: str, valores: list[tuple[str, float]], tag_controle: str):
+    regras = guia.regras
     item = _sub(itens_el, "item")
-    _sub(item, "receita", RECEITA_DIFAL_POR_OPERACAO)
+    _sub(item, "receita", receita)
+    if regras.detalhamento_receita:
+        _sub(item, "detalhamentoReceita", regras.detalhamento_receita)
     doc_origem = etree.SubElement(item, f"{{{GNRE_NS}}}documentoOrigem")
-    doc_origem.set("tipo", TIPO_DOC_ORIGEM_NFE)
+    doc_origem.set("tipo", regras.doc_origem_tipo)
     doc_origem.text = guia.chave_nfe
+    if regras.produto:
+        _sub(item, "produto", regras.produto)
+    if regras.exige_referencia:
+        if guia.data_emissao is None:
+            raise GnreXmlValidationError("A UF exige periodo de referencia, mas a data de emissao nao foi informada.")
+        ref = _sub(item, "referencia")
+        _sub(ref, "periodo", "0")
+        _sub(ref, "mes", f"{guia.data_emissao.month:02d}")
+        _sub(ref, "ano", str(guia.data_emissao.year))
     _sub(item, "dataVencimento", guia.data_vencimento.isoformat())
-    valor = etree.SubElement(item, f"{{{GNRE_NS}}}valor")
-    valor.set("tipo", VALOR_TIPO_PRINCIPAL_ICMS)
-    valor.text = f"{guia.valor_difal:.2f}"
+    for tipo, valor in valores:
+        el = etree.SubElement(item, f"{{{GNRE_NS}}}valor")
+        el.set("tipo", tipo)
+        el.text = f"{valor:.2f}"
 
     dest = _sub(item, "contribuinteDestinatario")
     _identificacao(dest, guia.destinatario.documento)
@@ -150,30 +177,16 @@ def _montar_item_difal(itens_el, guia: GuiaParaEmitir):
     if guia.destinatario.municipio_ibge:
         _sub(dest, "municipio", _municipio_gnre(guia.destinatario.municipio_ibge))
 
-    if guia.numero_controle:
-        _sub(item, "numeroControle", guia.numero_controle)
-
-
-def _montar_item_fcp(itens_el, guia: GuiaParaEmitir):
-    item = _sub(itens_el, "item")
-    _sub(item, "receita", RECEITA_FCP_POR_OPERACAO)
-    doc_origem = etree.SubElement(item, f"{{{GNRE_NS}}}documentoOrigem")
-    doc_origem.set("tipo", TIPO_DOC_ORIGEM_NFE)
-    doc_origem.text = guia.chave_nfe
-    _sub(item, "dataVencimento", guia.data_vencimento.isoformat())
-    valor = etree.SubElement(item, f"{{{GNRE_NS}}}valor")
-    valor.set("tipo", VALOR_TIPO_PRINCIPAL_FCP)
-    valor.text = f"{guia.valor_fcp:.2f}"
-
-    dest = _sub(item, "contribuinteDestinatario")
-    _identificacao(dest, guia.destinatario.documento)
-    if guia.destinatario.nome:
-        _sub(dest, "razaoSocial", guia.destinatario.nome[:60].strip())
-    if guia.destinatario.municipio_ibge:
-        _sub(dest, "municipio", _municipio_gnre(guia.destinatario.municipio_ibge))
+    obrigatorios = [c for c in regras.campos_extras if c.obrigatorio]
+    if obrigatorios:
+        extras = _sub(item, "camposExtras")
+        for campo in obrigatorios[:3]:
+            ce = _sub(extras, "campoExtra")
+            _sub(ce, "codigo", str(campo.codigo))
+            _sub(ce, "valor", _valor_campo_extra(campo, guia))
 
     if guia.numero_controle:
-        _sub(item, "numeroControleFecp", guia.numero_controle)
+        _sub(item, tag_controle, guia.numero_controle)
 
 
 def montar_dados_gnre(parent_guias, empresa: ContribuinteEmitente, guia: GuiaParaEmitir):
@@ -181,9 +194,17 @@ def montar_dados_gnre(parent_guias, empresa: ContribuinteEmitente, guia: GuiaPar
         raise GnreXmlValidationError(f"Chave de NF-e invalida: '{guia.chave_nfe}' (esperado 44 digitos).")
     if guia.valor_difal <= 0 and guia.valor_fcp <= 0:
         raise GnreXmlValidationError("Guia sem valor de DIFAL nem de FCP -- nada a emitir.")
+    regras = guia.regras
+    if regras.pendencias:
+        raise GnreXmlValidationError(
+            f"A UF {guia.uf_destino} exige algo que o sistema ainda nao sabe preencher: " + "; ".join(regras.pendencias)
+        )
+    if regras.exige_data_pagamento and guia.data_pagamento is None:
+        raise GnreXmlValidationError("A UF exige a data prevista de pagamento, mas ela nao foi informada.")
 
     tem_fcp = guia.valor_fcp > 0
-    tipo_gnre = "2" if tem_fcp else "0"  # 0=simples, 2=multiplas receitas
+    fcp_separado = tem_fcp and not regras.fecp_no_mesmo_item
+    tipo_gnre = "2" if fcp_separado else "0"  # 0=simples, 2=multiplas receitas
 
     dados = etree.SubElement(parent_guias, f"{{{GNRE_NS}}}TDadosGNRE")
     dados.set("versao", "2.00")
@@ -206,10 +227,21 @@ def montar_dados_gnre(parent_guias, empresa: ContribuinteEmitente, guia: GuiaPar
         _sub(contrib, "telefone", empresa.telefone)
 
     itens_el = _sub(dados, "itensGNRE")
-    if guia.valor_difal > 0:
-        _montar_item_difal(itens_el, guia)
-    if tem_fcp:
-        _montar_item_fcp(itens_el, guia)
+    valores_icms = [(VALOR_TIPO_PRINCIPAL_ICMS, guia.valor_difal)] if guia.valor_difal > 0 else []
+    if fcp_separado:
+        # UF com receita propria para o FCP (ex.: 100129): item separado.
+        if valores_icms:
+            _montar_item(itens_el, guia, RECEITA_DIFAL_POR_OPERACAO, valores_icms, "numeroControle")
+        _montar_item(
+            itens_el, guia, RECEITA_FCP_POR_OPERACAO, [(VALOR_TIPO_PRINCIPAL_FCP, guia.valor_fcp)], "numeroControleFecp"
+        )
+    else:
+        # FCP no mesmo item da receita do DIFAL (valor tipo 12), como o RJ exige.
+        valores = valores_icms + ([(VALOR_TIPO_PRINCIPAL_FCP, guia.valor_fcp)] if tem_fcp else [])
+        _montar_item(itens_el, guia, RECEITA_DIFAL_POR_OPERACAO, valores, "numeroControle")
+
+    if regras.exige_data_pagamento:
+        _sub(dados, "dataPagamento", guia.data_pagamento.isoformat())
 
     return dados
 
