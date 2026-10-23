@@ -133,6 +133,12 @@ _VERIFICAR_SSL = os.getenv("GNRE_VERIFY_SSL", "true").strip().lower() != "false"
 # serverless estiver "quente" (varias tentativas seguidas reaproveitam).
 _CACHE_WSDL = InMemoryCache(timeout=3600)
 
+# O GNRE as vezes demora mais de 60s (ja deu "Read timed out" na consulta).
+# No Vercel o limite real e o da funcao (vercel.json); no programa instalado
+# nao ha esse limite.
+_TIMEOUT_CARGA = int(os.getenv("GNRE_TIMEOUT_CARGA", "60"))
+_TIMEOUT_OPERACAO = int(os.getenv("GNRE_TIMEOUT_OPERACAO", "120"))
+
 
 def _client_mtls(wsdl_url: str, cert_path: str, key_path: str, registro: list | None = None) -> Client:
     session = requests.Session()
@@ -155,7 +161,7 @@ def _client_mtls(wsdl_url: str, cert_path: str, key_path: str, registro: list | 
             registro.append(linha)
 
         session.hooks["response"].append(_registrar)
-    transport = Transport(session=session, cache=_CACHE_WSDL, timeout=30, operation_timeout=60)
+    transport = Transport(session=session, cache=_CACHE_WSDL, timeout=_TIMEOUT_CARGA, operation_timeout=_TIMEOUT_OPERACAO)
     return Client(f"{wsdl_url}?wsdl", transport=transport)
 
 

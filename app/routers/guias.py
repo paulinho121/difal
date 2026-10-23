@@ -2,6 +2,7 @@ import base64
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import update
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -12,6 +13,8 @@ from app.services import certificado_manager, gnre_boleto, gnre_client, gnre_reg
 from app.services.nfe_parser import parse_nfe_xml
 
 router = APIRouter(prefix="/api/guias", tags=["guias"])
+
+_ENVIANDO_PARADO_SEGUNDOS = 300
 
 _BRASILIA = timezone(timedelta(hours=-3))  # sem horario de verao desde 2019
 
@@ -132,8 +135,24 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
     # levantou excecao mas nao conseguimos extrair o numeroRecibo da resposta
     # -- permite tentar de novo nesse caso especifico.
     preso_sem_protocolo = guia.status == "enviada" and not guia.protocolo_lote
-    if guia.status not in ("aguardando_confirmacao", "erro") and not preso_sem_protocolo:
+    # "enviando" que ficou parado (programa fechado no meio do envio) pode ser retomado.
+    enviando_parado = (
+        guia.status == "enviando" and (datetime.utcnow() - guia.atualizado_em).total_seconds() > _ENVIANDO_PARADO_SEGUNDOS
+    )
+    if guia.status not in ("aguardando_confirmacao", "erro") and not preso_sem_protocolo and not enviando_parado:
+        if guia.status == "enviando":
+            raise HTTPException(409, "Esta guia ja esta sendo enviada ao GNRE. Aguarde.")
         raise HTTPException(400, f"Guia em status '{guia.status}' nao pode ser confirmada/reenviada.")
+
+    # Reserva atomica: so UMA requisicao consegue passar de status X para "enviando".
+    # Sem isso, um duplo clique envia o lote duas vezes ao GNRE (aconteceu de verdade).
+    reservada = db.execute(
+        update(Guia).where(Guia.id == guia_id, Guia.status == guia.status).values(status="enviando", protocolo_lote=None)
+    )
+    db.commit()
+    if reservada.rowcount != 1:
+        raise HTTPException(409, "Esta guia ja esta sendo enviada ao GNRE. Aguarde.")
+    db.refresh(guia)
 
     empresa = get_or_create_empresa(db)
     nota = guia.nota_fiscal
@@ -210,7 +229,9 @@ def atualizar_status(guia_id: int, db: Session = Depends(get_db)):
     guia = db.get(Guia, guia_id)
     if guia is None:
         raise HTTPException(404, "Guia nao encontrada.")
-    if guia.status != "enviada" or not guia.protocolo_lote:
+    # Tambem permite consultar guia em "erro" que tem protocolo: o lote pode ter
+    # sido aceito pelo GNRE mesmo que a tela tenha ficado em erro (ex.: timeout na consulta).
+    if guia.status not in ("enviada", "erro") or not guia.protocolo_lote:
         raise HTTPException(400, "Guia ainda nao foi enviada ao GNRE (sem protocolo de lote).")
 
     try:

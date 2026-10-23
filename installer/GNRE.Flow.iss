@@ -1,6 +1,6 @@
 ; Instalador do GNRE.Flow (Inno Setup 6). Gerar com: build_windows.ps1
 #define AppName "GNRE.Flow"
-#define AppVersion "1.0.0"
+#define AppVersion "1.0.1"
 
 [Setup]
 AppId={{6B1B6C0E-6E3A-4C57-9B5B-5F0A3B7E2D11}
