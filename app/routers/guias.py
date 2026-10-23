@@ -1,4 +1,6 @@
 import base64
+import os
+import threading
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -66,6 +68,7 @@ def _serializar_guia(guia: Guia) -> dict:
         "data_vencimento": guia.data_vencimento.isoformat() if guia.data_vencimento else None,
         "linha_digitavel": guia.linha_digitavel,
         "tem_pdf": bool(guia.pdf_base64 or guia.linha_digitavel),
+        "consulta_automatica": os.getenv("GNRE_AUTO_CONSULTA") == "1",
         "mensagem_erro": guia.mensagem_erro,
         "criado_em": guia.criado_em.isoformat(),
         "atualizado_em": guia.atualizado_em.isoformat(),
@@ -224,6 +227,55 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
     return _serializar_guia(guia)
 
 
+_LOCK_CONSULTA = threading.Lock()  # uma consulta ao GNRE por vez (manual ou automatica)
+
+
+def consultar_e_atualizar(db: Session, guia: Guia) -> None:
+    """Consulta o resultado do lote no GNRE e atualiza a guia (emitida/erro/aviso).
+    Usada pelo botao "Atualizar Status" e pela consulta automatica."""
+    with _LOCK_CONSULTA:
+        try:
+            cert_pem, key_pem = _carregar_cert_da_empresa(db)
+            resultado = gnre_client.consultar_resultado_lote(guia.protocolo_lote, cert_pem, key_pem)
+
+            if not resultado.guias:
+                if resultado.situacao_processo_descricao:
+                    guia.mensagem_erro = (
+                        f"Sem guia no retorno ainda (codigo {resultado.situacao_processo_codigo}: "
+                        f"{resultado.situacao_processo_descricao})."
+                    )
+                else:
+                    # Formato de resposta nao reconhecido -- mostra o bruto pra diagnosticar.
+                    guia.mensagem_erro = f"Resposta da consulta nao reconhecida. Resposta bruta: {resultado.resposta_bruta[:1200]}"
+            else:
+                guia_result = resultado.guias[0]
+                if guia_result.situacao == gnre_client.SITUACAO_GUIA_PROCESSADA:
+                    guia.status = "emitida"
+                    guia.linha_digitavel = guia_result.linha_digitavel
+                    guia.mensagem_erro = None
+                    if guia_result.valor_gnre:
+                        guia.valor_total = guia_result.valor_gnre  # inclui juros/multa se houver
+                    if guia_result.nosso_numero:
+                        guia.numero_guia = guia_result.nosso_numero
+                    try:
+                        limite = date.fromisoformat(guia_result.data_limite_pagamento) if guia_result.data_limite_pagamento else None
+                        pdf = gnre_boleto.gerar_pdf(
+                            _dados_boleto(guia, limite, guia_result.nosso_numero, guia_result.informacoes)
+                        )
+                        guia.pdf_base64 = base64.b64encode(pdf).decode("ascii")
+                    except Exception as exc_pdf:  # noqa: BLE001 -- a guia ja esta emitida; o PDF pode ser refeito depois
+                        guia.mensagem_erro = f"Guia emitida, mas nao foi possivel montar o PDF: {exc_pdf}"
+                else:
+                    guia.status = "erro"
+                    motivos = "; ".join(f"{m['codigo']}: {m['descricao']}" for m in guia_result.motivos_rejeicao)
+                    guia.mensagem_erro = motivos or "Guia invalidada pelo Portal/UF ou erro de comunicacao."
+        except Exception as exc:  # noqa: BLE001
+            guia.mensagem_erro = str(exc)
+
+    db.commit()
+    db.refresh(guia)
+
+
 @router.post("/{guia_id}/atualizar-status")
 def atualizar_status(guia_id: int, db: Session = Depends(get_db)):
     guia = db.get(Guia, guia_id)
@@ -234,46 +286,7 @@ def atualizar_status(guia_id: int, db: Session = Depends(get_db)):
     if guia.status not in ("enviada", "erro") or not guia.protocolo_lote:
         raise HTTPException(400, "Guia ainda nao foi enviada ao GNRE (sem protocolo de lote).")
 
-    try:
-        cert_pem, key_pem = _carregar_cert_da_empresa(db)
-        resultado = gnre_client.consultar_resultado_lote(guia.protocolo_lote, cert_pem, key_pem)
-
-        if not resultado.guias:
-            if resultado.situacao_processo_descricao:
-                guia.mensagem_erro = (
-                    f"Sem guia no retorno ainda (codigo {resultado.situacao_processo_codigo}: "
-                    f"{resultado.situacao_processo_descricao})."
-                )
-            else:
-                # Formato de resposta nao reconhecido -- mostra o bruto pra diagnosticar.
-                guia.mensagem_erro = f"Resposta da consulta nao reconhecida. Resposta bruta: {resultado.resposta_bruta[:1200]}"
-        else:
-            guia_result = resultado.guias[0]
-            if guia_result.situacao == gnre_client.SITUACAO_GUIA_PROCESSADA:
-                guia.status = "emitida"
-                guia.linha_digitavel = guia_result.linha_digitavel
-                guia.mensagem_erro = None
-                if guia_result.valor_gnre:
-                    guia.valor_total = guia_result.valor_gnre  # inclui juros/multa se houver
-                if guia_result.nosso_numero:
-                    guia.numero_guia = guia_result.nosso_numero
-                try:
-                    limite = date.fromisoformat(guia_result.data_limite_pagamento) if guia_result.data_limite_pagamento else None
-                    pdf = gnre_boleto.gerar_pdf(
-                        _dados_boleto(guia, limite, guia_result.nosso_numero, guia_result.informacoes)
-                    )
-                    guia.pdf_base64 = base64.b64encode(pdf).decode("ascii")
-                except Exception as exc_pdf:  # noqa: BLE001 -- a guia ja esta emitida; o PDF pode ser refeito depois
-                    guia.mensagem_erro = f"Guia emitida, mas nao foi possivel montar o PDF: {exc_pdf}"
-            else:
-                guia.status = "erro"
-                motivos = "; ".join(f"{m['codigo']}: {m['descricao']}" for m in guia_result.motivos_rejeicao)
-                guia.mensagem_erro = motivos or "Guia invalidada pelo Portal/UF ou erro de comunicacao."
-    except Exception as exc:  # noqa: BLE001
-        guia.mensagem_erro = str(exc)
-
-    db.commit()
-    db.refresh(guia)
+    consultar_e_atualizar(db, guia)
     return _serializar_guia(guia)
 
 

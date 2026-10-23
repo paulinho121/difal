@@ -101,6 +101,10 @@ def main() -> int:
         _caixa_de_mensagem("O GNRE.Flow ja esta aberto. Procure a janela na barra de tarefas.")
         return 0
 
+    import os
+
+    os.environ["GNRE_AUTO_CONSULTA"] = "1"  # consulta o resultado dos lotes sozinho, com calma
+
     import uvicorn
 
     from app.main import app

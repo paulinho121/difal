@@ -20,7 +20,7 @@ python -m PyInstaller --noconfirm --clean --windowed `
 
 $iscc = Get-Command iscc -ErrorAction SilentlyContinue
 if (-not $iscc) {
-  $cand = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ }
-  if ($cand) { $iscc = $cand[0] }
+  $cand = @(@("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ })
+  if ($cand.Count -gt 0) { $iscc = $cand[0] }
 }
-if ($iscc) { & $iscc "installer\GNRE.Flow.iss" } else { Write-Host "Inno Setup nao encontrado: instalador nao gerado (pasta dist\GNRE.Flow esta pronta)." }
+if ($iscc) { & "$iscc" "installer\GNRE.Flow.iss" } else { Write-Host "Inno Setup nao encontrado: instalador nao gerado (pasta dist\GNRE.Flow esta pronta)." }

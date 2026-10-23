@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 
+from app import consulta_automatica
 from app.database import init_db
 from app.routers import certificado, dashboard, guias, xml_upload
 
@@ -13,7 +14,9 @@ APP_DIR = Path(__file__).resolve().parent
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    consulta_automatica.iniciar()
     yield
+    consulta_automatica.parar()
 
 
 app = FastAPI(title="GNRE.Flow - Automacao de DIFAL", lifespan=lifespan)

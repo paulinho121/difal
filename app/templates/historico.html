@@ -122,7 +122,10 @@
             } else if (g.status === 'enviada' && !g.protocolo_lote) {
                 acoes = `<button onclick="confirmar(${g.id})" class="px-3 py-2 bg-primary text-on-primary rounded-lg font-label-md text-xs">Tentar novamente</button>`;
             } else if (g.status === 'enviada') {
-                acoes = `<button onclick="atualizarStatus(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Atualizar Status</button>`;
+                if (g.consulta_automatica) {
+                    acoes = `<span class="text-xs text-on-surface-variant">O programa consulta o GNRE sozinho a cada 10 minutos. Quando a guia sair, o boleto aparece aqui.</span>`;
+                }
+                acoes += `<button onclick="atualizarStatus(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Consultar agora</button>`;
             } else if (g.status === 'enviando') {
                 acoes = `<span class="text-xs text-on-surface-variant">Enviando ao GNRE… aguarde.</span>`;
             } else if (g.status === 'erro') {
@@ -172,13 +175,16 @@
             </div>`;
         }
 
+        const abertas = new Set();  // linhas expandidas (preservadas quando a lista recarrega)
         window.toggleExpand = (id) => {
             const detail = document.getElementById('detail-' + id);
             const icon = document.getElementById('icon-' + id);
             if (detail.classList.contains('row-collapsed')) {
+                abertas.add(id);
                 detail.classList.remove('row-collapsed'); detail.classList.add('row-expanded');
                 icon.style.transform = 'rotate(180deg)';
             } else {
+                abertas.delete(id);
                 detail.classList.remove('row-expanded'); detail.classList.add('row-collapsed');
                 icon.style.transform = 'rotate(0deg)';
             }
@@ -226,9 +232,14 @@
             } else {
                 container.innerHTML = data.guias.map(renderGuia).join('');
             }
-            if (expandirId) {
-                toggleExpand(expandirId);
-            }
+            if (expandirId) abertas.add(expandirId);
+            abertas.forEach(id => {
+                const detail = document.getElementById('detail-' + id);
+                if (!detail) return;
+                detail.classList.remove('row-collapsed'); detail.classList.add('row-expanded');
+                const icon = document.getElementById('icon-' + id);
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            });
         }
 
         filtroUf.addEventListener('change', carregarLista);
@@ -239,5 +250,7 @@
         });
 
         carregarLista();
+        // Atualiza a lista sozinha (a consulta automatica pode mudar o status a qualquer momento).
+        setInterval(() => { if (emAndamento.size === 0) carregarLista(); }, 30000);
     </script>
 </body></html>
