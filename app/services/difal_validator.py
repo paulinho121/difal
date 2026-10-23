@@ -12,9 +12,10 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
+from app.paths import arquivo_editavel
 from app.services.nfe_parser import ItemICMSUFDest, ParsedNFe
 
-DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "aliquotas_internas.json"
+DATA_PATH = arquivo_editavel("aliquotas_internas.json")
 
 
 @lru_cache(maxsize=1)

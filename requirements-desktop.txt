@@ -1,0 +1,4 @@
+# Apenas para gerar o programa de Windows (nao e necessario no Vercel)
+pyinstaller==6.22.3
+pywebview==6.2.1
+pillow==12.0.0

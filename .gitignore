@@ -5,3 +5,9 @@ app/data/*.db
 app/data/secret.key
 .pytest_cache/
 .vercel/
+
+# Windows (PyInstaller / Inno Setup)
+build/
+dist/
+*.spec
+installer/Output/

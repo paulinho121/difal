@@ -7,7 +7,9 @@ from pathlib import Path
 
 from cryptography.fernet import Fernet
 
-SECRET_KEY_PATH = Path(__file__).resolve().parent.parent / "data" / "secret.key"
+from app.paths import data_dir
+
+SECRET_KEY_PATH = data_dir() / "secret.key"
 
 
 def _load_or_create_key() -> bytes:

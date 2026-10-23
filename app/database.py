@@ -7,9 +7,10 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 
+from app.paths import data_dir
+
 APP_DIR = Path(__file__).resolve().parent
-DATA_DIR = APP_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR = data_dir()
 
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'gnre_flow.db'}")
 
