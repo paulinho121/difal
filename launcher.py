@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import ctypes
 import logging
+import os
 import socket
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 import webbrowser
 
@@ -24,13 +26,18 @@ TITULO = "GNRE.Flow"
 
 def _redirecionar_saida_para_log() -> None:
     """Programa sem console (--windowed): sys.stdout/stderr sao None e o
-    uvicorn/logging quebram. Manda tudo para um arquivo na pasta de dados."""
-    log = open(data_dir() / "gnre_flow.log", "a", encoding="utf-8", buffering=1)
+    uvicorn/logging quebram. Descarta a saida padrao e manda o log para um
+    arquivo COM rotacao: um erro repetido (rota falhando a cada 30s) chegou a
+    14 mil linhas. Guarda no maximo ~1 MB x 3 arquivos."""
+    from logging.handlers import RotatingFileHandler
+
     if sys.stdout is None:
-        sys.stdout = log
+        sys.stdout = open(os.devnull, "w")
     if sys.stderr is None:
-        sys.stderr = log
-    logging.basicConfig(stream=log, level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+        sys.stderr = open(os.devnull, "w")
+    handler = RotatingFileHandler(data_dir() / "gnre_flow.log", maxBytes=1_000_000, backupCount=3, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logging.basicConfig(handlers=[handler], level=logging.INFO)
 
 
 def _caixa_de_mensagem(texto: str, titulo: str = TITULO) -> None:
@@ -50,10 +57,15 @@ def _porta_livre() -> int:
 
 
 def _aguardar_servidor(url: str, tentativas: int = 80) -> bool:
+    """O servidor esta de pe se QUALQUER resposta HTTP chegar -- inclusive um erro 500
+    de uma rota. Antes exigia 200 em /api/dashboard/stats e um bug nessa rota fazia o
+    programa dizer que o servidor nao subiu."""
     for _ in range(tentativas):
         try:
-            with urllib.request.urlopen(f"{url}/api/dashboard/stats", timeout=1):
+            with urllib.request.urlopen(f"{url}/", timeout=1):
                 return True
+        except urllib.error.HTTPError:
+            return True
         except Exception:  # noqa: BLE001
             time.sleep(0.25)
     return False
@@ -100,8 +112,6 @@ def main() -> int:
     if _ja_esta_aberto():
         _caixa_de_mensagem("O GNRE.Flow ja esta aberto. Procure a janela na barra de tarefas.")
         return 0
-
-    import os
 
     os.environ["GNRE_AUTO_CONSULTA"] = "1"  # consulta o resultado dos lotes sozinho, com calma
 

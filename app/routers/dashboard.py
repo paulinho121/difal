@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import Date, cast, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -25,8 +25,10 @@ def dashboard_stats(db: Session = Depends(get_db)):
     )
     guias_erro = db.query(func.count(Guia.id)).filter(Guia.status == "erro").scalar() or 0
 
+    # func.date() funciona nos dois bancos: SQLite devolve 'AAAA-MM-DD' e o
+    # Postgres aceita date(timestamp). (cast(..., Date) quebra no SQLite: devolve so o ano.)
     emissoes_por_dia = (
-        db.query(cast(Guia.criado_em, Date).label("dia"), func.count(Guia.id))
+        db.query(func.date(Guia.criado_em).label("dia"), func.count(Guia.id))
         .filter(Guia.status == "emitida")
         .group_by("dia")
         .order_by("dia")
