@@ -1,0 +1,4 @@
+{
+  "_observacao": "Valor do campo 'Convenio' que algumas UFs exigem na GNRE (ex.: PR). O GNRE so informa que e obrigatorio, sem listar valores; preencha com o valor confirmado pelo seu contador/SEFAZ da UF. Vazio = o envio para essa UF e barrado com um aviso.",
+  "PR": ""
+}

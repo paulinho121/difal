@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -153,3 +154,32 @@ def test_emitente_sem_cnpj_retorna_none_para_usar_fallback():
     nfe = _nfe_exemplo()
     nfe.emitente_cnpj = None
     assert contribuinte_emitente_da_nfe(nfe) is None
+
+
+def _guia_pr(convenio="VALOR-TESTE", **kw):
+    from app.services.gnre_regras import interpretar_config_uf
+
+    cfg = (Path(__file__).parent / "fixtures" / "config_uf_pr_100102.xml").read_text(encoding="utf-8")
+    regras = interpretar_config_uf(cfg, "100102")
+    regras.convenio = convenio
+    return _guia(uf_destino="PR", valor_fcp=0.0, numero_documento="563106", regras=regras, **kw)
+
+
+def test_lote_do_pr_usa_numero_da_nota_convenio_e_chave_em_campo_extra_e_valida_no_xsd():
+    xml_bytes = montar_lote_xml(EMPRESA, [_guia_pr()])
+    xml = xml_bytes.decode("utf-8")
+    compacto = "".join(xml.split())
+    assert '<documentoOrigemtipo="10">563106</documentoOrigem>' in compacto  # numero, nao a chave
+    assert "<convenio>VALOR-TESTE</convenio>" in xml
+    assert "<codigo>107</codigo><valor>35260712345678000199550010000123451123456780</valor>" in compacto
+    assert "<ufFavorecida>PR</ufFavorecida>" in xml
+    # ordem exigida pelo XSD: valor*, convenio, contribuinteDestinatario, camposExtras
+    assert xml.index("<convenio>") < xml.index("<contribuinteDestinatario>") < xml.index("<camposExtras>")
+    validar_contra_xsd(xml_bytes)
+
+
+def test_documento_de_origem_numerico_sem_numero_da_nota_levanta_erro():
+    guia = _guia_pr()
+    guia.numero_documento = None
+    with pytest.raises(GnreXmlValidationError, match="numero da nota"):
+        montar_lote_xml(EMPRESA, [guia])

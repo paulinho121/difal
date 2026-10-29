@@ -87,6 +87,7 @@ class GuiaParaEmitir:
     numero_controle: str | None = None
     data_emissao: date | None = None  # da NF-e; alguns campos extras exigem
     data_pagamento: date | None = None  # data prevista de pagamento (GNRE calcula juros/multa)
+    numero_documento: str | None = None  # numero da NF-e (UFs cujo documento de origem e o numero)
     regras: RegrasReceita = field(default_factory=RegrasReceita)
 
 
@@ -141,6 +142,8 @@ def _identificacao(parent, documento: str):
 
 def _valor_campo_extra(campo, guia: GuiaParaEmitir) -> str:
     titulo = campo.titulo.lower()
+    if "chave" in titulo:  # "Chave de Acesso da NFe ou do CTe/CTE-OS" (44 digitos)
+        return guia.chave_nfe
     if "emiss" in titulo:  # "Data de Emissao" (tolera acento corrompido)
         if guia.data_emissao is None:
             raise GnreXmlValidationError("A UF exige a data de emissao da NF-e, mas ela nao foi informada.")
@@ -160,7 +163,13 @@ def _montar_item(itens_el, guia: GuiaParaEmitir, receita: str, valores: list[tup
         _sub(item, "detalhamentoReceita", regras.detalhamento_receita)
     doc_origem = etree.SubElement(item, f"{{{GNRE_NS}}}documentoOrigem")
     doc_origem.set("tipo", regras.doc_origem_tipo)
-    doc_origem.text = guia.chave_nfe
+    if regras.doc_origem_e_numero:
+        numero = "".join(c for c in (guia.numero_documento or "") if c.isdigit())
+        if not numero:
+            raise GnreXmlValidationError("A UF exige o numero da nota como documento de origem, mas ele nao foi informado.")
+        doc_origem.text = numero
+    else:
+        doc_origem.text = guia.chave_nfe
     if regras.produto:
         _sub(item, "produto", regras.produto)
     if regras.exige_referencia:
@@ -175,6 +184,9 @@ def _montar_item(itens_el, guia: GuiaParaEmitir, receita: str, valores: list[tup
         el = etree.SubElement(item, f"{{{GNRE_NS}}}valor")
         el.set("tipo", tipo)
         el.text = f"{valor:.2f}"
+
+    if regras.convenio:
+        _sub(item, "convenio", regras.convenio[:30])
 
     dest = _sub(item, "contribuinteDestinatario")
     _identificacao(dest, guia.destinatario.documento)

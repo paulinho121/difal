@@ -31,6 +31,11 @@ class RegrasReceita:
     consulta ao GnreConfigUF nao esta disponivel."""
 
     doc_origem_tipo: str = "24"  # 24 = CHAVE DO DFe
+    # Algumas UFs (ex.: PR) nao oferecem "CHAVE DO DFe": o documento de origem e o
+    # NUMERO da nota (tipo 10 "NOTA FISCAL") e a chave vai num campo extra.
+    doc_origem_e_numero: bool = False
+    convenio_exigido: bool = False
+    convenio: str | None = None
     exige_data_pagamento: bool = True
     fecp_no_mesmo_item: bool = True
     exige_referencia: bool = False
@@ -83,8 +88,12 @@ def interpretar_config_uf(xml_texto: str, receita: str) -> RegrasReceita:
     escolhido = next((c for c, d in tipos if "CHAVE" in d and "DFE" in d.replace("-", "")), None) or next(
         (c for c, d in tipos if "NF" in d), None
     )
+    nota_fiscal = next((c for c, d in tipos if "NOTA FISCAL" in d and "CONHECIMENTO" not in d), None)
     if escolhido:
         regras.doc_origem_tipo = escolhido
+    elif nota_fiscal:
+        regras.doc_origem_tipo = nota_fiscal
+        regras.doc_origem_e_numero = True
     elif _sim(alvo, "exigeDocumentoOrigem"):
         regras.pendencias.append("tipo de documento de origem com chave de NF-e nao oferecido pela UF")
 
@@ -103,8 +112,9 @@ def interpretar_config_uf(xml_texto: str, receita: str) -> RegrasReceita:
             regras.detalhamento_receita = det[0]
         else:
             regras.pendencias.append("detalhamento da receita obrigatorio com varias opcoes")
-    if _sim(alvo, "exigeConvenio"):
-        regras.pendencias.append("convenio obrigatorio")
+    # O GNRE so diz que o convenio e obrigatorio, sem listar valores: o valor vem
+    # de convenios_gnre.json (ver aplicar_convenio) e nunca e adivinhado.
+    regras.convenio_exigido = _sim(alvo, "exigeConvenio")
     if _sim(alvo, "exigeParcela"):
         regras.pendencias.append("parcela obrigatoria")
 
@@ -121,6 +131,37 @@ def interpretar_config_uf(xml_texto: str, receita: str) -> RegrasReceita:
     return regras
 
 
+def _convenios_configurados() -> dict[str, str]:
+    import json
+
+    from app.paths import arquivo_editavel
+
+    try:
+        with open(arquivo_editavel("convenios_gnre.json"), encoding="utf-8") as f:
+            dados = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return {uf: str(v).strip() for uf, v in dados.items() if not uf.startswith("_") and str(v).strip()}
+
+
+def aplicar_convenio(regras: RegrasReceita, uf: str) -> RegrasReceita:
+    """Preenche o convenio exigido pela UF a partir do arquivo configuravel; se a UF
+    exige e nao ha valor configurado, vira pendencia (barra o envio, com instrucao)."""
+    import copy
+
+    r = copy.deepcopy(regras)
+    if r.convenio_exigido:
+        valor = _convenios_configurados().get(uf)
+        if valor:
+            r.convenio = valor
+        else:
+            r.pendencias.append(
+                f"a UF {uf} exige o campo Convenio e nenhum valor foi configurado "
+                f'(informe em convenios_gnre.json, ex.: {{"{uf}": "<valor confirmado com seu contador>"}})'
+            )
+    return r
+
+
 # Cache em memoria por instancia (UF, receita) -> (instante, regras)
 _CACHE: dict[tuple[str, str], tuple[float, RegrasReceita]] = {}
 _TTL_SEGUNDOS = 3600
@@ -133,11 +174,11 @@ def obter_regras(uf: str, receita: str, cert_pem: bytes, key_pem: bytes) -> tupl
     agora = time.time()
     em_cache = _CACHE.get(chave)
     if em_cache and agora - em_cache[0] < _TTL_SEGUNDOS:
-        return em_cache[1], None
+        return aplicar_convenio(em_cache[1], uf), None
     try:
         xml = gnre_client.consultar_config_uf(uf, receita, cert_pem, key_pem)
         regras = interpretar_config_uf(xml, receita)
     except Exception as exc:  # noqa: BLE001
         return RegrasReceita(), f"Nao foi possivel consultar as regras da UF {uf} no GNRE ({exc}); usando regras padrao."
     _CACHE[chave] = (agora, regras)
-    return regras, None
+    return aplicar_convenio(regras, uf), None

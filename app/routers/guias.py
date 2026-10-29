@@ -189,6 +189,7 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
             data_vencimento=guia.data_vencimento,
             numero_controle=f"{nota.numero or ''}{nota.serie or ''}"[:20] or None,
             data_emissao=nota.data_emissao.date() if nota.data_emissao else None,
+            numero_documento=nota.numero,
             # Vencimento = data da operacao; a data prevista de pagamento (hoje)
             # permite ao GNRE calcular juros/multa de guia paga em atraso.
             data_pagamento=_hoje_brasilia(),
