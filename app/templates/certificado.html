@@ -81,6 +81,22 @@
 </form>
 </div>
 </div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-stack-lg shadow-sm">
+<div class="flex items-center gap-2 mb-stack-md border-b border-outline-variant/10 pb-4">
+<span class="material-symbols-outlined text-primary">tune</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Convênios por UF</h4>
+</div>
+<p class="text-on-secondary-container text-body-sm mb-stack-md">Algumas UFs (ex.: PR) exigem o campo <b>Convênio</b> na GNRE e o GNRE não informa qual valor usar. Preencha com o valor confirmado pelo seu contador ou pela SEFAZ da UF. Sem isso, o envio para essa UF é barrado com um aviso.</p>
+<form class="flex flex-col md:flex-row gap-stack-md md:items-end" id="formConvenio">
+<div><label class="font-label-sm text-label-sm text-on-secondary-container block mb-1" for="convUf">UF</label>
+<select class="h-12 px-stack-md rounded-lg border border-outline-variant/50 outline-none font-label-md" id="convUf"></select></div>
+<div class="flex-grow"><label class="font-label-sm text-label-sm text-on-secondary-container block mb-1" for="convValor">Convênio (até 30 caracteres)</label>
+<input class="w-full h-12 px-stack-md rounded-lg border border-outline-variant/50 outline-none font-label-md" id="convValor" maxlength="30" type="text"/></div>
+<button class="h-12 px-stack-lg bg-primary text-white rounded-xl font-label-md" type="submit">Salvar</button>
+</form>
+<p class="text-xs mt-2" id="convMsg"></p>
+<div class="mt-stack-md text-sm" id="convLista"></div>
+</div>
 <div class="bg-surface-container-low border border-outline-variant/20 rounded-xl p-stack-md flex items-start gap-4">
 <span class="material-symbols-outlined text-primary text-[20px] mt-1">enhanced_encryption</span>
 <div>
@@ -161,6 +177,30 @@
             }
         });
 
+        function escC(t) { return String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        async function carregarConvenios() {
+            const d = await fetch('/api/certificado/convenios').then(r => r.json());
+            const sel = document.getElementById('convUf');
+            if (!sel.options.length) d.ufs.forEach(u => sel.add(new Option(u, u)));
+            const itens = Object.entries(d.convenios);
+            document.getElementById('convLista').innerHTML = itens.length
+                ? '<b>Configurados:</b> ' + itens.map(([u, v]) => `<span class="inline-block mr-3"><b>${escC(u)}</b>: ${escC(v)}</span>`).join('')
+                : '<span class="text-on-secondary-container">Nenhum convênio configurado ainda.</span>';
+        }
+        document.getElementById('formConvenio').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('convMsg');
+            const resp = await fetch('/api/certificado/convenios', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uf: document.getElementById('convUf').value, valor: document.getElementById('convValor').value }),
+            });
+            const data = await resp.json();
+            msg.textContent = resp.ok ? 'Salvo.' : (data.detail || 'Falha ao salvar.');
+            msg.className = resp.ok ? 'text-xs mt-2 text-green-700' : 'text-xs mt-2 text-error';
+            if (resp.ok) carregarConvenios();
+        });
+
         carregarStatus();
+        carregarConvenios();
     </script>
 </body></html>

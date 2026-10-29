@@ -42,7 +42,7 @@ def test_convenio_exigido_sem_valor_configurado_barra_com_instrucao(monkeypatch)
 
     monkeypatch.setattr(gnre_regras, "_convenios_configurados", lambda: {})
     r = gnre_regras.aplicar_convenio(interpretar_config_uf(CONFIG_PR, "100102"), "PR")
-    assert any("Convenio" in p and "convenios_gnre.json" in p for p in r.pendencias)
+    assert any("Convenio" in p and "Ajustes" in p for p in r.pendencias)
 
 
 def test_convenio_configurado_e_aplicado(monkeypatch):

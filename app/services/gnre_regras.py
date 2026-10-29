@@ -144,6 +144,37 @@ def _convenios_configurados() -> dict[str, str]:
     return {uf: str(v).strip() for uf, v in dados.items() if not uf.startswith("_") and str(v).strip()}
 
 
+UFS = ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI",
+       "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"]
+
+
+def listar_convenios() -> dict[str, str]:
+    return _convenios_configurados()
+
+
+def definir_convenio(uf: str, valor: str) -> None:
+    """Grava (ou, com valor vazio, esvazia) o convenio de uma UF no arquivo editavel."""
+    import json
+
+    from app.paths import arquivo_editavel
+
+    uf = uf.upper().strip()
+    valor = valor.strip()
+    if uf not in UFS:
+        raise ValueError(f"UF invalida: {uf!r}")
+    if len(valor) > 30:
+        raise ValueError("O convenio aceita no maximo 30 caracteres (limite do GNRE).")
+    caminho = arquivo_editavel("convenios_gnre.json")
+    try:
+        with open(caminho, encoding="utf-8") as f:
+            dados = json.load(f)
+    except (OSError, ValueError):
+        dados = {}
+    dados[uf] = valor
+    with open(caminho, "w", encoding="utf-8") as f:
+        json.dump(dados, f, ensure_ascii=False, indent=2)
+
+
 def aplicar_convenio(regras: RegrasReceita, uf: str) -> RegrasReceita:
     """Preenche o convenio exigido pela UF a partir do arquivo configuravel; se a UF
     exige e nao ha valor configurado, vira pendencia (barra o envio, com instrucao)."""
@@ -157,7 +188,7 @@ def aplicar_convenio(regras: RegrasReceita, uf: str) -> RegrasReceita:
         else:
             r.pendencias.append(
                 f"a UF {uf} exige o campo Convenio e nenhum valor foi configurado "
-                f'(informe em convenios_gnre.json, ex.: {{"{uf}": "<valor confirmado com seu contador>"}})'
+                f"(informe em Ajustes (cartao Convenios por UF), com o valor confirmado pelo seu contador ou pela SEFAZ de {uf})"
             )
     return r
 

@@ -100,6 +100,7 @@
         const filtroUf = document.getElementById('filtroUf');
         UFS.forEach(uf => filtroUf.innerHTML += `<option value="${uf}">${uf}</option>`);
 
+        function esc(t) { return String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
         function fmtMoeda(v) { return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
         function fmtData(iso) {
             if (!iso) return '--';
@@ -154,7 +155,7 @@
                         ${g.protocolo_lote ? `<div><span class="text-label-sm text-outline block">Protocolo do lote</span><span>${g.protocolo_lote}</span></div>` : ''}
                     </div>
                     <div class="flex flex-col gap-2 justify-center">
-                        ${g.mensagem_erro ? `<div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">${g.mensagem_erro}</div>` : ''}
+                        ${g.mensagem_erro ? `<div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">${esc(g.mensagem_erro)}</div>` : ''}
                         ${acoes}
                     </div>
                 </div>`;

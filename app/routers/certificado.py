@@ -1,11 +1,12 @@
 from urllib.parse import urlparse
 
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.empresa_singleton import get_or_create_empresa
-from app.services import certificado_manager, gnre_client
+from app.services import certificado_manager, gnre_client, gnre_regras
 
 router = APIRouter(prefix="/api/certificado", tags=["certificado"])
 
@@ -100,3 +101,22 @@ def consultar_config_uf(uf: str, receita: str | None = None, db: Session = Depen
         return {"ok": True, "uf": uf.upper(), "receita": receita, "xml": xml}
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "erro": str(exc)}
+
+
+class ConvenioEntrada(BaseModel):
+    uf: str
+    valor: str = ""
+
+
+@router.get("/convenios")
+def listar_convenios():
+    return {"ufs": gnre_regras.UFS, "convenios": gnre_regras.listar_convenios()}
+
+
+@router.put("/convenios")
+def salvar_convenio(entrada: ConvenioEntrada):
+    try:
+        gnre_regras.definir_convenio(entrada.uf, entrada.valor)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"ok": True, "convenios": gnre_regras.listar_convenios()}
