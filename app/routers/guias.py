@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.empresa_singleton import get_or_create_empresa
 from app.models import Guia
+from app import consulta_automatica
 from app.services import certificado_manager, gnre_boleto, gnre_client, gnre_regras, gnre_xml_builder
+from app.services.difal_validator import mensagem_uf_sem_gnre_online
 from app.services.nfe_parser import parse_nfe_xml
 
 router = APIRouter(prefix="/api/guias", tags=["guias"])
@@ -142,7 +144,10 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
     enviando_parado = (
         guia.status == "enviando" and (datetime.utcnow() - guia.atualizado_em).total_seconds() > _ENVIANDO_PARADO_SEGUNDOS
     )
-    if guia.status not in ("aguardando_confirmacao", "erro") and not preso_sem_protocolo and not enviando_parado:
+    bloqueio = mensagem_uf_sem_gnre_online(guia.uf_favorecida)
+    if bloqueio:
+        raise HTTPException(400, bloqueio)
+    if guia.status not in ("aguardando_confirmacao", "aguardando_reenvio", "erro") and not preso_sem_protocolo and not enviando_parado:
         if guia.status == "enviando":
             raise HTTPException(409, "Esta guia ja esta sendo enviada ao GNRE. Aguarde.")
         raise HTTPException(400, f"Guia em status '{guia.status}' nao pode ser confirmada/reenviada.")
@@ -219,6 +224,16 @@ def confirmar_e_emitir(guia_id: int, db: Session = Depends(get_db)):
             guia.status = "enviada"
             guia.protocolo_lote = None
             guia.mensagem_erro = f"Enviado, mas sem numeroRecibo na resposta. Resposta bruta: {resultado.resposta_bruta[:1500]}"
+    except gnre_client.GnreLimiteRequisicoesError as exc:
+        # 429: o GNRE barrou o pedido antes de processar -- nenhum lote foi criado.
+        # No programa instalado, tenta de novo sozinho de tempos em tempos.
+        if consulta_automatica.ativa():
+            guia.status = "aguardando_reenvio"
+            guia.mensagem_erro = f"{exc} O programa tentara enviar de novo sozinho a cada 10 minutos."
+            consulta_automatica.marcar_envio_barrado(guia.id)
+        else:
+            guia.status = "erro"
+            guia.mensagem_erro = str(exc)
     except Exception as exc:  # noqa: BLE001 -- superficie de erro fiscal, precisa chegar ate o usuario
         guia.status = "erro"
         guia.mensagem_erro = str(exc)

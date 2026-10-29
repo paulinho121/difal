@@ -84,13 +84,14 @@
 </main>
 <script>
         const STATUS_LABEL = {
-            calculada: 'Calculada', aguardando_confirmacao: 'Aguardando confirmação', enviando: 'Enviando…',
+            calculada: 'Calculada', aguardando_confirmacao: 'Aguardando confirmação', enviando: 'Enviando…', aguardando_reenvio: 'Novo envio automático',
             enviada: 'Enviada', emitida: 'Emitida', erro: 'Erro',
         };
         const STATUS_COR = {
             calculada: 'bg-surface-variant text-on-surface-variant',
             aguardando_confirmacao: 'bg-amber-100 text-amber-700',
             enviando: 'bg-blue-100 text-blue-700',
+            aguardando_reenvio: 'bg-amber-100 text-amber-700',
             enviada: 'bg-blue-100 text-blue-700',
             emitida: 'bg-green-100 text-green-700',
             erro: 'bg-red-100 text-red-700',
@@ -127,6 +128,9 @@
                     acoes = `<span class="text-xs text-on-surface-variant">O programa consulta o GNRE sozinho a cada 10 minutos. Quando a guia sair, o boleto aparece aqui.</span>`;
                 }
                 acoes += `<button onclick="atualizarStatus(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Consultar agora</button>`;
+            } else if (g.status === 'aguardando_reenvio') {
+                acoes = `<span class="text-xs text-on-surface-variant">O GNRE limitou as requisições. O programa tenta enviar de novo sozinho a cada 10 minutos — deixe-o aberto.</span>`;
+                acoes += `<button onclick="confirmar(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Tentar enviar agora</button>`;
             } else if (g.status === 'enviando') {
                 acoes = `<span class="text-xs text-on-surface-variant">Enviando ao GNRE… aguarde.</span>`;
             } else if (g.status === 'erro') {

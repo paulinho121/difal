@@ -24,6 +24,18 @@ def _tabela() -> dict:
         return json.load(f)
 
 
+# Confirmado pelo proprio GNRE (guia real recusada com 201 "Esta UF nao gera GNRE online").
+# Fica no codigo (nao no JSON editavel) para valer em toda atualizacao do programa.
+UFS_SEM_GNRE_ONLINE = {
+    "SP": "O GNRE nao gera guia online para SP (erro 201 do proprio GNRE). "
+    "O DIFAL para SP deve ser recolhido pela guia da SEFAZ-SP (GARE-ICMS), fora deste programa.",
+}
+
+
+def mensagem_uf_sem_gnre_online(uf: str | None) -> str | None:
+    return UFS_SEM_GNRE_ONLINE.get(uf or "")
+
+
 def uf_suportada_gnre_nacional(uf: str | None) -> bool:
     if not uf:
         return True

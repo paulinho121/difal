@@ -58,6 +58,11 @@ class GnreClientError(Exception):
     pass
 
 
+class GnreLimiteRequisicoesError(GnreClientError):
+    """429 Too Many Requests do GNRE: o pedido foi barrado ANTES de ser processado
+    (nenhum lote foi criado), entao repetir o envio e seguro."""
+
+
 class OperacaoSoapNaoEncontradaError(GnreClientError):
     def __init__(self, tentadas: list[str], disponiveis: list[str]):
         self.tentadas = tentadas
@@ -169,7 +174,7 @@ def _traduzir_erro(exc: Exception, registro: list) -> GnreClientError:
     texto = str(exc)
     resumo = "; ".join(registro) if registro else "nenhuma requisicao concluida"
     if "(429)" in texto or "429 Too Many Requests" in texto:
-        return GnreClientError(
+        return GnreLimiteRequisicoesError(
             "O GNRE limitou as requisicoes (429 Too Many Requests). Aguarde alguns minutos e tente de novo "
             f"(se era um envio, nenhuma guia foi criada). Requisicoes desta tentativa: {resumo}"
         )

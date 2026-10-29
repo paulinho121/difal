@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Guia, ItemNotaFiscal, NotaFiscal
 from app.services import gnre_xml_builder
-from app.services.difal_validator import validar_nota
+from app.services.difal_validator import mensagem_uf_sem_gnre_online, validar_nota
 from app.services.nfe_parser import NFeParseError, parse_nfe_xml
 
 router = APIRouter(prefix="/api/xml", tags=["xml"])
@@ -61,7 +61,8 @@ def _persistir_nota(db: Session, nfe, validacao) -> NotaFiscal:
 
     guia = Guia(
         nota_fiscal_id=nota.id,
-        status="aguardando_confirmacao",
+        status="erro" if mensagem_uf_sem_gnre_online(nfe.uf_destino) else "aguardando_confirmacao",
+        mensagem_erro=mensagem_uf_sem_gnre_online(nfe.uf_destino),
         uf_favorecida=nfe.uf_destino,
         codigo_receita_difal=gnre_xml_builder.RECEITA_DIFAL_POR_OPERACAO if validacao.valor_difal_total > 0 else None,
         codigo_receita_fcp=gnre_xml_builder.RECEITA_FCP_POR_OPERACAO if validacao.valor_fcp_total > 0 else None,

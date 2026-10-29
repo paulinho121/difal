@@ -19,7 +19,7 @@ def dashboard_stats(db: Session = Depends(get_db)):
     guias_emitidas = db.query(func.count(Guia.id)).filter(Guia.status == "emitida").scalar() or 0
     guias_pendentes = (
         db.query(func.count(Guia.id))
-        .filter(Guia.status.in_(["calculada", "aguardando_confirmacao", "enviando", "enviada"]))
+        .filter(Guia.status.in_(["calculada", "aguardando_confirmacao", "aguardando_reenvio", "enviando", "enviada"]))
         .scalar()
         or 0
     )
