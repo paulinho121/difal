@@ -193,23 +193,81 @@ def aplicar_convenio(regras: RegrasReceita, uf: str) -> RegrasReceita:
     return r
 
 
-# Cache em memoria por instancia (UF, receita) -> (instante, regras)
-_CACHE: dict[tuple[str, str], tuple[float, RegrasReceita]] = {}
-_TTL_SEGUNDOS = 3600
+# Regras de uma UF/receita quase nunca mudam. Para nao depender do GNRE a cada envio
+# (o GnreConfigUF tambem leva 429), cada resposta boa e guardada em DISCO e reaproveitada
+# por 24h; se o GNRE estiver indisponivel usa a copia guardada, mesmo velha. NUNCA cai
+# para "regras padrao": enviar com as regras erradas de outra UF foi um furo real.
+_CACHE: dict[tuple[str, str], tuple[float, RegrasReceita]] = {}  # memoria da instancia
+_TTL_MEMORIA = 3600
+_TTL_DISCO = 24 * 3600
+
+
+class RegrasIndisponiveisError(Exception):
+    pass
+
+
+def _arquivo_regras(uf: str, receita: str):
+    from app.paths import data_dir
+
+    return data_dir() / "regras_gnre" / f"{uf}_{receita}.xml"
+
+
+def _ler_disco(uf: str, receita: str):
+    """(xml, idade_em_segundos) da copia guardada, ou (None, None)."""
+    try:
+        caminho = _arquivo_regras(uf, receita)
+        return caminho.read_text(encoding="utf-8"), time.time() - caminho.stat().st_mtime
+    except OSError:
+        return None, None
+
+
+def _gravar_disco(uf: str, receita: str, xml: str) -> None:
+    try:
+        caminho = _arquivo_regras(uf, receita)
+        caminho.parent.mkdir(parents=True, exist_ok=True)
+        caminho.write_text(xml, encoding="utf-8")
+    except OSError:
+        pass  # somente leitura (ex.: Vercel): segue so com a memoria
+
+
+def _ler_semente(uf: str, receita: str):
+    """Regras ja conferidas ao vivo (RJ e PR), embutidas no programa, para o caso de
+    nao haver copia em disco nem acesso ao GNRE."""
+    from app.paths import RECURSOS_DATA
+
+    try:
+        return (RECURSOS_DATA / "regras_gnre" / f"{uf}_{receita}.xml").read_text(encoding="utf-8")
+    except OSError:
+        return None
 
 
 def obter_regras(uf: str, receita: str, cert_pem: bytes, key_pem: bytes) -> tuple[RegrasReceita, str | None]:
-    """Retorna (regras, aviso). Se o GnreConfigUF falhar, usa os defaults e
-    devolve um aviso -- o proprio GNRE valida o lote e recusar nao gera debito."""
+    """Retorna (regras, aviso). Levanta RegrasIndisponiveisError se nao houver como
+    saber as regras da UF (o envio e barrado em vez de ir as cegas)."""
     chave = (uf, receita)
     agora = time.time()
     em_cache = _CACHE.get(chave)
-    if em_cache and agora - em_cache[0] < _TTL_SEGUNDOS:
+    if em_cache and agora - em_cache[0] < _TTL_MEMORIA:
         return aplicar_convenio(em_cache[1], uf), None
+
+    xml_disco, idade = _ler_disco(uf, receita)
+    if xml_disco and idade < _TTL_DISCO:
+        regras = interpretar_config_uf(xml_disco, receita)
+        _CACHE[chave] = (agora, regras)
+        return aplicar_convenio(regras, uf), None
+
     try:
         xml = gnre_client.consultar_config_uf(uf, receita, cert_pem, key_pem)
         regras = interpretar_config_uf(xml, receita)
     except Exception as exc:  # noqa: BLE001
-        return RegrasReceita(), f"Nao foi possivel consultar as regras da UF {uf} no GNRE ({exc}); usando regras padrao."
+        reserva = xml_disco or _ler_semente(uf, receita)
+        if reserva:
+            aviso = f"Nao foi possivel atualizar as regras da UF {uf} no GNRE ({exc}); usando a ultima copia conhecida."
+            return aplicar_convenio(interpretar_config_uf(reserva, receita), uf), aviso
+        raise RegrasIndisponiveisError(
+            f"Nao foi possivel consultar as regras da UF {uf} no GNRE agora e nao ha copia guardada. "
+            f"Nada foi enviado. Tente novamente em alguns minutos. Detalhe: {exc}"
+        ) from exc
+    _gravar_disco(uf, receita, xml)
     _CACHE[chave] = (agora, regras)
     return aplicar_convenio(regras, uf), None
