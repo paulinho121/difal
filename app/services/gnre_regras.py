@@ -23,6 +23,9 @@ class CampoExtraExigido:
     tipo: str  # D = data, T = texto, N = numerico
     titulo: str
     obrigatorio: bool
+    # Versoes do XML de lote em que o campo existe. O RS, por ex., lista o campo 74 so na 1.00;
+    # nos lotes 2.00 (o que enviamos) ele nao se aplica e mandar causaria recusa.
+    versoes: list[str] = field(default_factory=lambda: ["1.00", "2.00"])
 
 
 @dataclass
@@ -85,8 +88,11 @@ def interpretar_config_uf(xml_texto: str, receita: str) -> RegrasReceita:
         (_texto(t, "codigo"), (_texto(t, "descricao") or "").upper())
         for t in alvo.xpath(".//*[local-name()='tipoDocumentoOrigem']")
     ]
-    escolhido = next((c for c, d in tipos if "CHAVE" in d and "DFE" in d.replace("-", "")), None) or next(
-        (c for c, d in tipos if "NF" in d), None
+    # Prefere o tipo especifico da NF-e ("CHAVE DA NFe", RS) ao generico ("CHAVE DO DFe").
+    escolhido = (
+        next((c for c, d in tipos if "CHAVE" in d and "NFE" in d.replace("-", "") and "CTE" not in d), None)
+        or next((c for c, d in tipos if "CHAVE" in d and "DFE" in d.replace("-", "")), None)
+        or next((c for c, d in tipos if "NF" in d), None)
     )
     nota_fiscal = next((c for c, d in tipos if "NOTA FISCAL" in d and "CONHECIMENTO" not in d), None)
     if escolhido:
@@ -126,6 +132,7 @@ def interpretar_config_uf(xml_texto: str, receita: str) -> RegrasReceita:
                 tipo=_texto(c, "tipo") or "T",
                 titulo=_texto(c, "titulo") or "",
                 obrigatorio=_sim(c, "obrigatorio"),
+                versoes=[v.text.strip() for v in c.xpath(".//*[local-name()='versao']") if v.text] or ["1.00", "2.00"],
             )
         )
     return regras

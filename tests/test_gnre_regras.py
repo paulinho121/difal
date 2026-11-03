@@ -59,3 +59,22 @@ def test_aplicar_convenio_nao_altera_as_regras_em_cache():
     base = interpretar_config_uf(CONFIG_PR, "100102")
     gnre_regras.aplicar_convenio(base, "PR")
     assert base.pendencias == [] and base.convenio is None
+
+
+CONFIG_RS = (Path(__file__).parent / "fixtures" / "config_uf_rs_100102.xml").read_text(encoding="utf-8")
+
+
+def test_regras_do_rs_prefere_chave_da_nfe_e_campo_74_so_vale_na_versao_1():
+    r = interpretar_config_uf(CONFIG_RS, "100102")
+    assert r.doc_origem_tipo == "22"  # CHAVE DA NFe (e nao o generico 24 "CHAVE DO DFe")
+    assert r.doc_origem_e_numero is False
+    assert r.convenio_exigido is True
+    c74 = next(c for c in r.campos_extras if c.codigo == 74)
+    assert c74.obrigatorio and c74.versoes == ["1.00"]  # nao se aplica ao lote 2.00
+
+
+def test_rj_continua_usando_24_pois_so_oferece_chave_do_dfe():
+    assert interpretar_config_uf(CONFIG_RJ_PARA_TESTE, "100102").doc_origem_tipo == "24"
+
+
+CONFIG_RJ_PARA_TESTE = (Path(__file__).parent / "fixtures" / "config_uf_rj_100102.xml").read_text(encoding="utf-8")

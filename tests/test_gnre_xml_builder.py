@@ -183,3 +183,19 @@ def test_documento_de_origem_numerico_sem_numero_da_nota_levanta_erro():
     guia.numero_documento = None
     with pytest.raises(GnreXmlValidationError, match="numero da nota"):
         montar_lote_xml(EMPRESA, [guia])
+
+
+def test_lote_do_rs_usa_chave_da_nfe_convenio_e_nao_envia_o_campo_extra_so_da_versao_1():
+    from app.services.gnre_regras import interpretar_config_uf
+
+    cfg = (Path(__file__).parent / "fixtures" / "config_uf_rs_100102.xml").read_text(encoding="utf-8")
+    regras = interpretar_config_uf(cfg, "100102")
+    regras.convenio = "VALOR-TESTE"
+    guia = _guia(uf_destino="RS", valor_fcp=0.0, regras=regras)
+    xml_bytes = montar_lote_xml(EMPRESA, [guia])
+    xml = xml_bytes.decode("utf-8")
+    assert '<documentoOrigem tipo="22">35260712345678000199550010000123451123456780</documentoOrigem>' in xml
+    assert "<convenio>VALOR-TESTE</convenio>" in xml
+    assert "<camposExtras>" not in xml  # campo 74 e so da versao 1.00
+    assert 'tipo="12"' not in xml  # RS sem FECOP
+    validar_contra_xsd(xml_bytes)

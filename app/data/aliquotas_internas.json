@@ -23,7 +23,7 @@
     "PI": {"aliquota_padrao": 21.0, "fcp_padrao": 2.0},
     "RJ": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
     "RN": {"aliquota_padrao": 18.0, "fcp_padrao": 2.0},
-    "RS": {"aliquota_padrao": 17.0, "fcp_padrao": 2.0},
+    "RS": {"aliquota_padrao": 17.0, "fcp_padrao": 0.0},
     "RO": {"aliquota_padrao": 19.5, "fcp_padrao": 0.0},
     "RR": {"aliquota_padrao": 20.0, "fcp_padrao": 2.0},
     "SC": {"aliquota_padrao": 17.0, "fcp_padrao": 0.0},

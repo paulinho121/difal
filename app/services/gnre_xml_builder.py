@@ -195,7 +195,7 @@ def _montar_item(itens_el, guia: GuiaParaEmitir, receita: str, valores: list[tup
     if guia.destinatario.municipio_ibge:
         _sub(dest, "municipio", _municipio_gnre(guia.destinatario.municipio_ibge))
 
-    obrigatorios = [c for c in regras.campos_extras if c.obrigatorio]
+    obrigatorios = [c for c in regras.campos_extras if c.obrigatorio and "2.00" in c.versoes]
     if obrigatorios:
         extras = _sub(item, "camposExtras")
         for campo in obrigatorios[:3]:
