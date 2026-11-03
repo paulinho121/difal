@@ -183,8 +183,10 @@ def definir_convenio(uf: str, valor: str) -> None:
 
 
 def aplicar_convenio(regras: RegrasReceita, uf: str) -> RegrasReceita:
-    """Preenche o convenio exigido pela UF a partir do arquivo configuravel; se a UF
-    exige e nao ha valor configurado, vira pendencia (barra o envio, com instrucao)."""
+    """Preenche o convenio da UF a partir do arquivo configuravel. O GNRE costuma listar o
+    campo como exigido mesmo quando a UF ja nao o cobra (ex.: RS no DIFAL); por isso a falta
+    do valor NAO barra o envio: o lote vai sem o campo e, se a UF realmente o exigir, o GNRE
+    recusa com a mensagem dele, exibida na guia."""
     import copy
 
     r = copy.deepcopy(regras)
@@ -192,11 +194,6 @@ def aplicar_convenio(regras: RegrasReceita, uf: str) -> RegrasReceita:
         valor = _convenios_configurados().get(uf)
         if valor:
             r.convenio = valor
-        else:
-            r.pendencias.append(
-                f"a UF {uf} exige o campo Convenio e nenhum valor foi configurado "
-                f"(informe em Ajustes (cartao Convenios por UF), com o valor confirmado pelo seu contador ou pela SEFAZ de {uf})"
-            )
     return r
 
 

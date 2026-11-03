@@ -199,3 +199,14 @@ def test_lote_do_rs_usa_chave_da_nfe_convenio_e_nao_envia_o_campo_extra_so_da_ve
     assert "<camposExtras>" not in xml  # campo 74 e so da versao 1.00
     assert 'tipo="12"' not in xml  # RS sem FECOP
     validar_contra_xsd(xml_bytes)
+
+
+def test_lote_do_rs_sem_convenio_configurado_vai_sem_o_campo_e_valida_no_xsd():
+    from app.services.gnre_regras import interpretar_config_uf
+
+    cfg = (Path(__file__).parent / "fixtures" / "config_uf_rs_100102.xml").read_text(encoding="utf-8")
+    regras = interpretar_config_uf(cfg, "100102")
+    guia = _guia(uf_destino="RS", valor_fcp=0.0, regras=regras)
+    xml_bytes = montar_lote_xml(EMPRESA, [guia])
+    assert b"<convenio>" not in xml_bytes
+    validar_contra_xsd(xml_bytes)

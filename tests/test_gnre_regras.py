@@ -37,12 +37,12 @@ def test_regras_do_pr_documento_de_origem_e_o_numero_e_chave_vai_em_campo_extra(
     assert obrigatorios == [(107, "Chave")]
 
 
-def test_convenio_exigido_sem_valor_configurado_barra_com_instrucao(monkeypatch):
+def test_convenio_exigido_sem_valor_configurado_nao_barra_e_vai_sem_o_campo(monkeypatch):
     from app.services import gnre_regras
 
     monkeypatch.setattr(gnre_regras, "_convenios_configurados", lambda: {})
     r = gnre_regras.aplicar_convenio(interpretar_config_uf(CONFIG_PR, "100102"), "PR")
-    assert any("Convenio" in p and "Ajustes" in p for p in r.pendencias)
+    assert r.pendencias == [] and r.convenio is None
 
 
 def test_convenio_configurado_e_aplicado(monkeypatch):

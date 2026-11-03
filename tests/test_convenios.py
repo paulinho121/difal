@@ -23,10 +23,3 @@ def test_convenio_valida_uf_e_tamanho():
     with TestClient(app) as c:
         assert c.put("/api/certificado/convenios", json={"uf": "XX", "valor": "a"}).status_code == 400
         assert c.put("/api/certificado/convenios", json={"uf": "PR", "valor": "a" * 31}).status_code == 400
-
-
-def test_mensagem_de_pendencia_do_convenio_nao_tem_colchetes_angulares(monkeypatch):
-    monkeypatch.setattr(gnre_regras, "_convenios_configurados", lambda: {})
-    r = gnre_regras.aplicar_convenio(interpretar_config_uf(CONFIG_PR, "100102"), "PR")
-    texto = " ".join(r.pendencias)
-    assert "<" not in texto and ">" not in texto and "Ajustes" in texto
