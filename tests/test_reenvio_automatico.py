@@ -116,3 +116,13 @@ def test_sp_e_bloqueada_ja_no_upload_e_no_envio(cenario):
     r = cenario.post(f"/api/guias/{gid}/confirmar")
     assert r.status_code == 400 and "SP" in r.json()["detail"]
     assert cenario.envios == []
+
+
+def test_es_tambem_e_bloqueado_porque_o_gnre_diz_uf_nao_habilitada(cenario):
+    gid = _nova_guia(cenario, "8007", uf="ES")
+    db = SessionLocal()
+    g = db.get(Guia, gid)
+    assert g.status == "erro" and "999" in g.mensagem_erro
+    db.close()
+    assert cenario.post(f"/api/guias/{gid}/confirmar").status_code == 400
+    assert cenario.envios == []

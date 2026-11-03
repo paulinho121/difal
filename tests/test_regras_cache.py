@@ -72,3 +72,18 @@ def test_copia_em_disco_velha_e_usada_quando_o_gnre_falha(monkeypatch):
     regras, aviso = obter_regras("PR", "100102", b"c", b"k")
     assert chamadas == ["PR"] and aviso  # tentou atualizar, falhou, usou a copia
     assert regras.doc_origem_tipo == "10"
+
+
+def test_resposta_de_uf_nao_habilitada_nao_vai_para_o_cache_em_disco(monkeypatch):
+    nao_habilitada = (
+        '<ns1:TConfigUf xmlns:ns1="http://www.gnre.pe.gov.br"><ns1:ambiente>1</ns1:ambiente><ns1:uf>ES</ns1:uf>'
+        "<ns1:situacaoConsulta><ns1:codigo>999</ns1:codigo><ns1:descricao>UF nao habilitada neste ambiente!"
+        "</ns1:descricao></ns1:situacaoConsulta></ns1:TConfigUf>"
+    )
+    gnre_regras._CACHE.clear()
+    monkeypatch.setattr(gnre_regras, "_ler_disco", lambda uf, rec: (None, None))
+    gravados = []
+    monkeypatch.setattr(gnre_regras, "_gravar_disco", lambda uf, rec, xml: gravados.append(xml))
+    monkeypatch.setattr(gnre_regras.gnre_client, "consultar_config_uf", lambda *a: nao_habilitada)
+    regras, _ = gnre_regras.obter_regras("ES", "100102", b"c", b"k")
+    assert regras.pendencias and gravados == [] and ("ES", "100102") not in gnre_regras._CACHE

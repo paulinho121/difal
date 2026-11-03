@@ -257,8 +257,9 @@ def obter_regras(uf: str, receita: str, cert_pem: bytes, key_pem: bytes) -> tupl
     xml_disco, idade = _ler_disco(uf, receita)
     if xml_disco and idade < _TTL_DISCO:
         regras = interpretar_config_uf(xml_disco, receita)
-        _CACHE[chave] = (agora, regras)
-        return aplicar_convenio(regras, uf), None
+        if not regras.pendencias:  # resposta de recusa da UF nao vale como copia boa
+            _CACHE[chave] = (agora, regras)
+            return aplicar_convenio(regras, uf), None
 
     try:
         xml = gnre_client.consultar_config_uf(uf, receita, cert_pem, key_pem)
@@ -272,6 +273,7 @@ def obter_regras(uf: str, receita: str, cert_pem: bytes, key_pem: bytes) -> tupl
             f"Nao foi possivel consultar as regras da UF {uf} no GNRE agora e nao ha copia guardada. "
             f"Nada foi enviado. Tente novamente em alguns minutos. Detalhe: {exc}"
         ) from exc
-    _gravar_disco(uf, receita, xml)
-    _CACHE[chave] = (agora, regras)
+    if not regras.pendencias:  # so guarda respostas boas: a de "UF nao habilitada" nao e regra
+        _gravar_disco(uf, receita, xml)
+        _CACHE[chave] = (agora, regras)
     return aplicar_convenio(regras, uf), None

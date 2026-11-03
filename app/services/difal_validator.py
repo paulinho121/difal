@@ -29,6 +29,11 @@ def _tabela() -> dict:
 UFS_SEM_GNRE_ONLINE = {
     "SP": "O GNRE nao gera guia online para SP (erro 201 do proprio GNRE). "
     "O DIFAL para SP deve ser recolhido pela guia da SEFAZ-SP (GARE-ICMS), fora deste programa.",
+    # O GnreConfigUF devolve para o ES a mesma resposta que devolve para SP: codigo 999
+    # "UF nao habilitada neste ambiente" (conferido ao vivo, sem receita e com a 100102).
+    "ES": "O GNRE informa que o ES nao esta habilitado para gerar guia online (codigo 999 \"UF nao habilitada "
+    "neste ambiente\", a mesma resposta dada para SP). O DIFAL para ES deve ser recolhido pela guia da "
+    "propria SEFAZ-ES, fora deste programa.",
 }
 
 
