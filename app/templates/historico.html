@@ -236,10 +236,7 @@
                 const data = await resp.json().catch(() => null);
                 if (!resp.ok) { alert('Falhou: ' + (data && data.detail ? data.detail : `erro ${resp.status}`)); }
                 else if (data.mensagem_erro) { alert(data.mensagem_erro); }
-                else { alert(`Valor recalculado pela planilha de base dupla: ${fmtMoeda(data.valor_total)} (DIFAL ${fmtMoeda(data.valor_difal)} + FCP ${fmtMoeda(data.valor_fcp)}).
-
-` + (data.avisos || []).join('
-')); }
+                else { alert(`Valor recalculado pela planilha de base dupla: ${fmtMoeda(data.valor_total)} (DIFAL ${fmtMoeda(data.valor_difal)} + FCP ${fmtMoeda(data.valor_fcp)}).` + String.fromCharCode(10, 10) + (data.avisos || []).join(String.fromCharCode(10))); }
             } finally { emAndamento.delete(id); }
             await carregarLista(id);
         };
