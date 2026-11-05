@@ -1,0 +1,125 @@
+{
+  "_observacao": "Calculo por BASE DUPLA (planilha 'Difal base dupla'), usado quando a NF-e e emitida por um CNPJ das UFs listadas em ufs_emitente. aliquota_total = 'Aliquota Interna + FCP' (coluna F da planilha); fcp = parte da aliquota_total que e fundo de combate a pobreza (so serve para separar o valor em DIFAL e FCP; o total a pagar nao muda). Se a NF-e declarar pFCPUFDest, o percentual declarado prevalece. Alterou a planilha? Atualize aqui e reinicie o programa.",
+  "atualizado_em": "2026-11-05",
+  "planilha_inicio_uso": "2025-01-23",
+  "ufs_emitente": [
+    "SP",
+    "CE"
+  ],
+  "ufs": {
+    "AC": {
+      "aliquota_total": 19.0,
+      "fcp": 0.0
+    },
+    "AL": {
+      "aliquota_total": 21.5,
+      "fcp": 1.0
+    },
+    "AM": {
+      "aliquota_total": 20.0,
+      "fcp": 0.0
+    },
+    "AP": {
+      "aliquota_total": 18.0,
+      "fcp": 0.0
+    },
+    "BA": {
+      "aliquota_total": 20.5,
+      "fcp": 0.0
+    },
+    "CE": {
+      "aliquota_total": 20.0,
+      "fcp": 0.0
+    },
+    "DF": {
+      "aliquota_total": 20.0,
+      "fcp": 0.0
+    },
+    "ES": {
+      "aliquota_total": 17.0,
+      "fcp": 0.0
+    },
+    "GO": {
+      "aliquota_total": 19.0,
+      "fcp": 0.0
+    },
+    "MA": {
+      "aliquota_total": 23.0,
+      "fcp": 0.0
+    },
+    "MG": {
+      "aliquota_total": 18.0,
+      "fcp": 0.0
+    },
+    "MS": {
+      "aliquota_total": 17.0,
+      "fcp": 0.0
+    },
+    "MT": {
+      "aliquota_total": 17.0,
+      "fcp": 0.0
+    },
+    "PA": {
+      "aliquota_total": 19.0,
+      "fcp": 0.0
+    },
+    "PB": {
+      "aliquota_total": 20.0,
+      "fcp": 0.0
+    },
+    "PE": {
+      "aliquota_total": 20.5,
+      "fcp": 0.0
+    },
+    "PI": {
+      "aliquota_total": 22.5,
+      "fcp": 0.0
+    },
+    "PR": {
+      "aliquota_total": 19.5,
+      "fcp": 0.0
+    },
+    "RJ": {
+      "aliquota_total": 22.0,
+      "fcp": 2.0
+    },
+    "RN": {
+      "aliquota_total": 20.0,
+      "fcp": 0.0
+    },
+    "RO": {
+      "aliquota_total": 19.5,
+      "fcp": 0.0
+    },
+    "RR": {
+      "aliquota_total": 20.0,
+      "fcp": 0.0
+    },
+    "RS": {
+      "aliquota_total": 17.0,
+      "fcp": 0.0
+    },
+    "SC": {
+      "aliquota_total": 17.0,
+      "fcp": 0.0
+    },
+    "SE": {
+      "aliquota_total": 20.0,
+      "fcp": 1.0
+    },
+    "SP": {
+      "aliquota_total": 18.0,
+      "fcp": 0.0
+    },
+    "TO": {
+      "aliquota_total": 20.0,
+      "fcp": 0.0
+    }
+  },
+  "fcp_adicional_por_ncm": {
+    "_observacao": "FECOP a mais, por prefixo de NCM, anotado na planilha (PB: NCM 9405 tem FECOP de 2%). Soma-se por cima da aliquota_total.",
+    "PB": {
+      "9405": 2.0
+    }
+  }
+}

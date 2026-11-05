@@ -11,6 +11,7 @@ python -m PyInstaller --noconfirm --clean --windowed `
   --add-data "app\templates;app\templates" `
   --add-data "app\schemas;app\schemas" `
   --add-data "app\data\aliquotas_internas.json;app\data" `
+  --add-data "app\data\base_dupla.json;app\data" `
   --add-data "app\data\convenios_gnre.json;app\data" `
   --add-data "app\data\regras_gnre;app\data\regras_gnre" `
   --collect-all zeep `

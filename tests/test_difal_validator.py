@@ -9,6 +9,9 @@ FIXTURE = Path(__file__).parent / "fixtures" / "nfe_exemplo_difal.xml"
 def _validar(xml_bytes=None):
     if xml_bytes is None:
         xml_bytes = FIXTURE.read_bytes()
+    # A fixture e emitida por SP (base dupla); estes testes cobrem o valor DECLARADO, usado
+    # nas demais UFs de origem (ex.: SC).
+    xml_bytes = xml_bytes.replace(b"<UF>SP</UF>", b"<UF>SC</UF>", 1)
     return validar_nota(parse_nfe_xml(xml_bytes))
 
 

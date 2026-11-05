@@ -13,6 +13,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from app.paths import arquivo_editavel
+from app.services import base_dupla
 from app.services.nfe_parser import ItemICMSUFDest, ParsedNFe
 
 DATA_PATH = arquivo_editavel("aliquotas_internas.json")
@@ -66,6 +67,9 @@ class ValidacaoNota:
     valor_difal_total: float
     valor_fcp_total: float
     divergente: bool
+    metodo: str = "declarado"  # "declarado" (valor da NF-e) | "base_dupla" (planilha)
+    erro_calculo: str | None = None  # com valor, a guia NAO pode ser emitida
+    avisos: list[str] = field(default_factory=list)
 
 
 def _recalcular_item(item: ItemICMSUFDest, aliquota_interna: float | None, fcp_padrao: float | None, tolerancia_pct: float) -> ValidacaoItem:
@@ -122,7 +126,76 @@ def _recalcular_item(item: ItemICMSUFDest, aliquota_interna: float | None, fcp_p
     )
 
 
+def _validar_base_dupla(nfe: ParsedNFe) -> ValidacaoNota:
+    """Calculo da planilha de base dupla (notas emitidas por CNPJs de SP e CE). Aqui o valor
+    da guia e CALCULADO a partir da nota; o ICMSUFDest da NF-e (se houver) so e comparado."""
+    uf = nfe.uf_destino
+    params = base_dupla.parametros_uf(uf)
+    itens: list[ValidacaoItem] = []
+    avisos: list[str] = []
+    erros: list[str] = []
+
+    def pronto(erro: str | None = None) -> ValidacaoNota:
+        return ValidacaoNota(
+            uf_destino=uf,
+            uf_suportada=uf_suportada_gnre_nacional(uf),
+            itens=itens,
+            valor_difal_total=round(sum(i.valor_difal_final for i in itens), 2),
+            valor_fcp_total=round(sum(i.valor_fcp_final for i in itens), 2),
+            divergente=False,
+            metodo="base_dupla",
+            erro_calculo=erro,
+            avisos=avisos,
+        )
+
+    if params is None:
+        erros.append(f"a planilha de base dupla (base_dupla.json) nao tem a UF de destino {uf}")
+    consumidor_final = nfe.ind_final == "1" or any(i.tem_difal_declarado for i in nfe.itens)
+    if not consumidor_final:
+        avisos.append("Nota nao marcada como venda a consumidor final (indFinal): a base dupla nao foi aplicada.")
+        return pronto()
+
+    for item in nfe.itens:
+        if params is None:
+            break
+        p_inter = base_dupla.aliquota_interestadual(item)
+        if p_inter is None:
+            erros.append(
+                f"item {item.numero_item}: sem aliquota interestadual de 4%, 7% ou 12% no ICMS da nota "
+                f"(encontrado: {item.p_icms_origem})"
+            )
+            continue
+        aliq_total, pct_fcp = base_dupla.taxas_do_item(params, uf, item)
+        calc = base_dupla.calcular(base_dupla.valor_operacao(item), p_inter, aliq_total, pct_fcp)
+        item_avisos = [
+            f"Item {item.numero_item}: base dupla (planilha) - operacao R$ {calc.valor_operacao:.2f}, ICMS origem "
+            f"{p_inter:g}% = R$ {calc.icms_origem:.2f}, base R$ {calc.base_calculo:.2f}, aliquota interna+FCP "
+            f"{calc.aliquota_total:g}% -> DIFAL R$ {calc.difal:.2f} + FCP R$ {calc.fcp:.2f}."
+        ]
+        if item.tem_difal_declarado:
+            declarado = round((item.v_icms_uf_dest or 0.0) + (item.v_fcp_uf_dest or 0.0), 2)
+            if abs(declarado - calc.total) > 0.02:
+                item_avisos.append(
+                    f"Item {item.numero_item}: a NF-e declara R$ {declarado:.2f} (aliquota interna "
+                    f"{item.p_icms_uf_dest if item.p_icms_uf_dest is not None else '--'}%); pela planilha de base dupla "
+                    f"o valor e R$ {calc.total:.2f}. Foi usado o da planilha."
+                )
+        itens.append(
+            ValidacaoItem(
+                numero_item=item.numero_item,
+                aplica_difal=True,
+                aliquota_interna_usada=calc.aliquota_total,
+                valor_difal_final=calc.difal,
+                valor_fcp_final=calc.fcp,
+                avisos=item_avisos,
+            )
+        )
+    return pronto("Nao foi possivel calcular a base dupla: " + "; ".join(erros) + "." if erros else None)
+
+
 def validar_nota(nfe: ParsedNFe) -> ValidacaoNota:
+    if base_dupla.aplica(nfe.uf_origem, nfe.uf_destino):
+        return _validar_base_dupla(nfe)
     tabela = _tabela()
     uf = nfe.uf_destino
     uf_data = tabela["ufs"].get(uf) if uf else None

@@ -146,6 +146,10 @@
                 }
             }
 
+            if (g.pode_recalcular && g.metodo_calculo === 'base_dupla') {
+                acoes += `<button onclick="recalcular(${g.id})" class="px-3 py-2 border border-outline-variant rounded-lg font-label-md text-xs">Recalcular valor (planilha base dupla)</button>`;
+            }
+
             const detalhe = `
                 <div class="px-stack-lg py-stack-lg grid grid-cols-1 md:grid-cols-3 gap-stack-lg border-t border-outline-variant/10 text-sm">
                     <div class="space-y-2">
@@ -154,6 +158,7 @@
                     </div>
                     <div class="space-y-2">
                         <div><span class="text-label-sm text-outline block">DIFAL / FCP</span><span>${fmtMoeda(g.valor_difal)} / ${fmtMoeda(g.valor_fcp)}</span></div>
+                        ${g.metodo_calculo === 'base_dupla' ? `<div><span class="text-label-sm text-outline block">Cálculo</span><span>Base dupla (planilha) — notas de SP e CE</span></div>` : ''}
                         <div><span class="text-label-sm text-outline block">Vencimento</span><span>${fmtData(g.data_vencimento)}</span></div>
                         ${g.linha_digitavel ? `<div><span class="text-label-sm text-outline block">Linha digitável</span><span class="font-label-md text-xs break-all">${g.linha_digitavel}</span></div>` : ''}
                         ${g.protocolo_lote ? `<div><span class="text-label-sm text-outline block">Protocolo do lote</span><span>${g.protocolo_lote}</span></div>` : ''}
@@ -223,6 +228,21 @@
         window.confirmar = (id) => chamarAcao(`/api/guias/${id}/confirmar`, id);
         window.atualizarStatus = (id) => chamarAcao(`/api/guias/${id}/atualizar-status`, id);
         window.reemitir = (id) => chamarAcao(`/api/guias/${id}/reemitir`, id);
+        window.recalcular = async (id) => {
+            if (emAndamento.has(id)) return;
+            emAndamento.add(id);
+            try {
+                const resp = await fetch(`/api/guias/${id}/recalcular`, { method: 'POST' });
+                const data = await resp.json().catch(() => null);
+                if (!resp.ok) { alert('Falhou: ' + (data && data.detail ? data.detail : `erro ${resp.status}`)); }
+                else if (data.mensagem_erro) { alert(data.mensagem_erro); }
+                else { alert(`Valor recalculado pela planilha de base dupla: ${fmtMoeda(data.valor_total)} (DIFAL ${fmtMoeda(data.valor_difal)} + FCP ${fmtMoeda(data.valor_fcp)}).
+
+` + (data.avisos || []).join('
+')); }
+            } finally { emAndamento.delete(id); }
+            await carregarLista(id);
+        };
 
         async function carregarLista(expandirId) {
             const params = new URLSearchParams();

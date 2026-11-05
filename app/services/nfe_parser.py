@@ -33,6 +33,14 @@ class ItemICMSUFDest:
     v_fcp_uf_dest: float | None = None
     v_icms_uf_dest: float | None = None
     v_icms_uf_remet: float | None = None
+    # Valores do item que formam o "valor da operacao" (base dupla) e a aliquota do ICMS
+    # destacado na nota (origem). Existem mesmo quando a nota nao traz o grupo ICMSUFDest.
+    v_frete: float = 0.0
+    v_seg: float = 0.0
+    v_desc: float = 0.0
+    v_outro: float = 0.0
+    v_ipi: float = 0.0
+    p_icms_origem: float | None = None
 
     @property
     def tem_difal_declarado(self) -> bool:
@@ -54,6 +62,7 @@ class ParsedNFe:
     valor_total_produtos: float
     valor_total_nota: float
     itens: list[ItemICMSUFDest] = field(default_factory=list)
+    ind_final: str | None = None  # ide/indFinal: "1" = consumidor final
     # Dados cadastrais do emitente (a filial que fez a venda), usados como
     # "contribuinte emitente" da guia GNRE.
     emitente_nome: str | None = None
@@ -154,6 +163,15 @@ def parse_nfe_xml(xml_bytes: bytes) -> ParsedNFe:
             cfop=cfop,
             v_prod=v_prod,
         )
+        if prod is not None:
+            item.v_frete = _float(prod, "nfe:vFrete") or 0.0
+            item.v_seg = _float(prod, "nfe:vSeg") or 0.0
+            item.v_desc = _float(prod, "nfe:vDesc") or 0.0
+            item.v_outro = _float(prod, "nfe:vOutro") or 0.0
+        v_ipi = det.xpath("string(nfe:imposto/nfe:IPI//nfe:vIPI)", namespaces=NS)
+        item.v_ipi = float(v_ipi) if v_ipi else 0.0
+        p_icms = det.xpath("string(nfe:imposto/nfe:ICMS/*/nfe:pICMS)", namespaces=NS)
+        item.p_icms_origem = float(p_icms) if p_icms else None
         if icms_uf_dest is not None:
             item.v_bc_uf_dest = _float(icms_uf_dest, "nfe:vBCUFDest")
             item.v_bc_fcp_uf_dest = _float(icms_uf_dest, "nfe:vBCFCPUFDest")
@@ -180,6 +198,7 @@ def parse_nfe_xml(xml_bytes: bytes) -> ParsedNFe:
         valor_total_produtos=valor_total_produtos,
         valor_total_nota=valor_total_nota,
         itens=itens,
+        ind_final=_text(ide, "nfe:indFinal") if ide is not None else None,
         emitente_nome=emitente_nome,
         emitente_logradouro=emitente_logradouro,
         emitente_numero=emitente_numero,

@@ -10,25 +10,7 @@ from app.services.nfe_parser import NFeParseError, parse_nfe_xml
 router = APIRouter(prefix="/api/xml", tags=["xml"])
 
 
-def _persistir_nota(db: Session, nfe, validacao) -> NotaFiscal:
-    nota = NotaFiscal(
-        chave_acesso=nfe.chave_acesso,
-        numero=nfe.numero,
-        serie=nfe.serie,
-        data_emissao=nfe.data_emissao.replace(tzinfo=None) if nfe.data_emissao else None,
-        xml_raw="",  # preenchido pelo chamador antes do commit
-        emitente_cnpj=nfe.emitente_cnpj,
-        uf_origem=nfe.uf_origem,
-        destinatario_doc=nfe.destinatario_doc,
-        destinatario_nome=nfe.destinatario_nome,
-        uf_destino=nfe.uf_destino,
-        municipio_destino_ibge=nfe.municipio_destino_ibge,
-        valor_total_produtos=nfe.valor_total_produtos,
-        valor_total_nota=nfe.valor_total_nota,
-    )
-    db.add(nota)
-    db.flush()
-
+def gravar_itens(db: Session, nota: NotaFiscal, nfe, validacao) -> None:
     validacao_por_numero = {v.numero_item: v for v in validacao.itens}
     for item in nfe.itens:
         v = validacao_por_numero.get(item.numero_item)
@@ -56,13 +38,40 @@ def _persistir_nota(db: Session, nfe, validacao) -> NotaFiscal:
             )
         )
 
+
+def bloqueio_da_guia(uf_destino: str | None, validacao) -> str | None:
+    """Motivo pelo qual a guia ja nasce (ou volta a ficar) em 'erro', ou None."""
+    return mensagem_uf_sem_gnre_online(uf_destino) or validacao.erro_calculo
+
+
+def _persistir_nota(db: Session, nfe, validacao) -> NotaFiscal:
+    nota = NotaFiscal(
+        chave_acesso=nfe.chave_acesso,
+        numero=nfe.numero,
+        serie=nfe.serie,
+        data_emissao=nfe.data_emissao.replace(tzinfo=None) if nfe.data_emissao else None,
+        xml_raw="",  # preenchido pelo chamador antes do commit
+        emitente_cnpj=nfe.emitente_cnpj,
+        uf_origem=nfe.uf_origem,
+        destinatario_doc=nfe.destinatario_doc,
+        destinatario_nome=nfe.destinatario_nome,
+        uf_destino=nfe.uf_destino,
+        municipio_destino_ibge=nfe.municipio_destino_ibge,
+        valor_total_produtos=nfe.valor_total_produtos,
+        valor_total_nota=nfe.valor_total_nota,
+    )
+    db.add(nota)
+    db.flush()
+
+    gravar_itens(db, nota, nfe, validacao)
+
     data_vencimento = nfe.data_emissao.date() if nfe.data_emissao else None
     numero_controle = f"{nfe.numero or ''}{nfe.serie or ''}"[:20] or None
 
     guia = Guia(
         nota_fiscal_id=nota.id,
-        status="erro" if mensagem_uf_sem_gnre_online(nfe.uf_destino) else "aguardando_confirmacao",
-        mensagem_erro=mensagem_uf_sem_gnre_online(nfe.uf_destino),
+        status="erro" if bloqueio_da_guia(nfe.uf_destino, validacao) else "aguardando_confirmacao",
+        mensagem_erro=bloqueio_da_guia(nfe.uf_destino, validacao),
         uf_favorecida=nfe.uf_destino,
         codigo_receita_difal=gnre_xml_builder.RECEITA_DIFAL_POR_OPERACAO if validacao.valor_difal_total > 0 else None,
         codigo_receita_fcp=gnre_xml_builder.RECEITA_FCP_POR_OPERACAO if validacao.valor_fcp_total > 0 else None,
@@ -116,7 +125,8 @@ async def upload_xmls(files: list[UploadFile], db: Session = Depends(get_db)):
                 "valor_fcp": validacao.valor_fcp_total,
                 "valor_total": round(validacao.valor_difal_total + validacao.valor_fcp_total, 2),
                 "divergente": validacao.divergente,
-                "avisos": (
+                "metodo_calculo": validacao.metodo,
+                "avisos": validacao.avisos + (
                     [
                         f"UF de destino {nota.uf_destino}: nao foi possivel confirmar que o GNRE nacional "
                         "aceita o recolhimento do DIFAL com a receita usada (pode exigir guia/receita "

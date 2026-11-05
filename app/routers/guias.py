@@ -13,12 +13,16 @@ from app.empresa_singleton import get_or_create_empresa
 from app.models import Guia
 from app import consulta_automatica
 from app.services import certificado_manager, gnre_boleto, gnre_client, gnre_regras, gnre_xml_builder
-from app.services.difal_validator import mensagem_uf_sem_gnre_online
+from app.routers.xml_upload import bloqueio_da_guia, gravar_itens
+from app.services import base_dupla
+from app.services.difal_validator import mensagem_uf_sem_gnre_online, validar_nota
 from app.services.nfe_parser import parse_nfe_xml
 
 router = APIRouter(prefix="/api/guias", tags=["guias"])
 
 _ENVIANDO_PARADO_SEGUNDOS = 300
+# Guias que ainda nao foram aceitas pelo GNRE (sem protocolo): o valor ainda pode ser refeito.
+_STATUS_RECALCULAVEIS = ("aguardando_confirmacao", "aguardando_reenvio", "erro")
 
 _BRASILIA = timezone(timedelta(hours=-3))  # sem horario de verao desde 2019
 
@@ -71,6 +75,8 @@ def _serializar_guia(guia: Guia) -> dict:
         "linha_digitavel": guia.linha_digitavel,
         "tem_pdf": bool(guia.pdf_base64 or guia.linha_digitavel),
         "consulta_automatica": os.getenv("GNRE_AUTO_CONSULTA") == "1",
+        "metodo_calculo": "base_dupla" if base_dupla.aplica(nota.uf_origem, nota.uf_destino) else "declarado",
+        "pode_recalcular": guia.status in _STATUS_RECALCULAVEIS and not guia.protocolo_lote,
         "mensagem_erro": guia.mensagem_erro,
         "criado_em": guia.criado_em.isoformat(),
         "atualizado_em": guia.atualizado_em.isoformat(),
@@ -318,6 +324,38 @@ def reemitir(guia_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(guia)
     return _serializar_guia(guia)
+
+
+@router.post("/{guia_id}/recalcular")
+def recalcular(guia_id: int, db: Session = Depends(get_db)):
+    """Refaz o valor da guia a partir do XML guardado, com as regras de calculo atuais
+    (ex.: base dupla para notas de SP e CE). So vale para guia que o GNRE ainda nao aceitou."""
+    guia = db.get(Guia, guia_id)
+    if guia is None:
+        raise HTTPException(404, "Guia nao encontrada.")
+    if guia.status not in _STATUS_RECALCULAVEIS or guia.protocolo_lote:
+        raise HTTPException(400, "So e possivel recalcular guias que ainda nao foram enviadas e aceitas pelo GNRE.")
+    nota = guia.nota_fiscal
+    nfe = parse_nfe_xml(nota.xml_raw.encode("utf-8"))
+    validacao = validar_nota(nfe)
+    for item in list(nota.itens):
+        db.delete(item)
+    db.flush()
+    gravar_itens(db, nota, nfe, validacao)
+
+    bloqueio = bloqueio_da_guia(nota.uf_destino, validacao)
+    guia.valor_difal = validacao.valor_difal_total
+    guia.valor_fcp = validacao.valor_fcp_total
+    guia.valor_total = round(validacao.valor_difal_total + validacao.valor_fcp_total, 2)
+    guia.codigo_receita_difal = gnre_xml_builder.RECEITA_DIFAL_POR_OPERACAO if guia.valor_difal > 0 else None
+    guia.codigo_receita_fcp = gnre_xml_builder.RECEITA_FCP_POR_OPERACAO if guia.valor_fcp > 0 else None
+    guia.status = "erro" if bloqueio else "aguardando_confirmacao"
+    guia.mensagem_erro = bloqueio
+    db.commit()
+    db.refresh(guia)
+    resposta = _serializar_guia(guia)
+    resposta["avisos"] = validacao.avisos + [a for i in validacao.itens for a in i.avisos]
+    return resposta
 
 
 @router.get("/{guia_id}/pdf")
